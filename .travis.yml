@@ -1,0 +1,8 @@
+dist: xenial
+language: c
+
+install:
+  - sudo apt-get install autoconf libtool pkg-config build-essential libjson-c-dev python-cffi python-dev
+
+script:
+  - "./bootstrap.sh && ./configure && make clean && make"
