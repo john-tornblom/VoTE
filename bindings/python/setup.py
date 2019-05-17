@@ -16,6 +16,7 @@
 # along with this program; see the file COPYING. If not see
 # <http://www.gnu.org/licenses/>.
 
+import os
 import sys
 import unittest
 
@@ -37,7 +38,8 @@ class TestCommand(Command):
     def finalize_options(self): pass
 
     def run(self):
-        suite = unittest.TestLoader().discover('.')
+        dirname = os.path.dirname(__file__) or '.'
+        suite = unittest.TestLoader().discover(dirname)
         runner = unittest.TextTestRunner(verbosity=2, buffer=True)
         exit_code = not runner.run(suite).wasSuccessful()
         sys.exit(exit_code)
