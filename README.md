@@ -38,6 +38,14 @@ command:
 john@localhost:VoTE$ ./support/collision_detection.sh
 ```
 
+VoTE also includes Python bindings for easy prototyping and testing of
+domain-specific property checkers. See [example.py](bindings/python/example.py)
+for a simple example. To invoke a test suite for the python bindings, invoke
+the following command:
+```console
+john@localhost:VoTE$ python bindings/python/setup.py test
+```
+
 ## Reporting Bugs
 If you encounter problems with VoTE, please 
 [file a github issue](https://github.com/john-tornblom/vote/issues/new). 
