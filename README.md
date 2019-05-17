@@ -13,7 +13,7 @@ For more information, see
 
 ## Building
 Autotools is used to generate makefiles, and VoTE Core depends on libjson-c to
-parse decision trees and random forests. On Ubuntu-flavored operating systems,
+parse decision trees and tree ensembles. On Ubuntu-flavored operating systems,
 you can invoke the following commands to install dependencies, generate
 makefiles, and compile the source code.
 ```console
