@@ -31,14 +31,14 @@ see <http://www.gnu.org/licenses/>.  */
 vote_ensemble_t*
 vote_ensemble_load(const char *filename) {
   json_object *obj;
-  json_object* root = json_object_from_file(filename);
+  json_object *root = json_object_from_file(filename);
   assert(root);
   
   json_object_object_get_ex(root, "trees", &obj);
-  array_list* array = json_object_get_array(obj);
+  array_list *array = json_object_get_array(obj);
   assert(array);
   
-  vote_ensemble_t* e = calloc(1, sizeof(vote_ensemble_t));
+  vote_ensemble_t *e = calloc(1, sizeof(vote_ensemble_t));
   assert(e);
   
   e->nb_trees = array_list_length(array);
@@ -82,7 +82,7 @@ vote_ensemble_load(const char *filename) {
 
 
 void
-vote_ensemble_del(vote_ensemble_t* e) {
+vote_ensemble_del(vote_ensemble_t *e) {
   for(size_t i=0; i<e->nb_trees; i++) {
     vote_tree_del(e->trees[i]);
   }

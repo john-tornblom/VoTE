@@ -24,6 +24,7 @@ see <http://www.gnu.org/licenses/>.  */
 #include "vote.h"
 #include "vote_math.h"
 
+
 vote_mapping_t*
 vote_mapping_new(size_t input_dim, size_t output_dim) {
   assert(input_dim);
@@ -83,6 +84,7 @@ int
 vote_mapping_argmax(const vote_mapping_t* m) {
   size_t k = 0;
 
+  // find class with largest upper bound
   for(size_t i=0; i<m->nb_outputs; i++) {
     if(m->outputs[i].upper > m->outputs[k].upper) {
       k = i;
@@ -107,6 +109,7 @@ int
 vote_mapping_argmin(const vote_mapping_t* m) {
   size_t k = 0;
 
+  // find class with smallest lower bound
   for(size_t i=0; i<m->nb_outputs; i++) {
     if(m->outputs[i].lower < m->outputs[k].lower) {
       k = i;

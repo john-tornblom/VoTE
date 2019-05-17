@@ -50,7 +50,7 @@ typedef struct vote_mapping {
 
 
 /**
- * Forward declaration of a tree, only used internally by vote.
+ * Forward declaration of a tree, only used internally by VoTE.
  **/
 struct vote_tree;
 typedef struct vote_tree vote_tree_t;
@@ -188,7 +188,7 @@ bool vote_ensemble_forall(const vote_ensemble_t *f, const vote_bound_t* input_re
 
 
 /**
- * Approximate a pessimistic and sound mapping for a given input region
+ * Approximate a pessimistic and sound mapping for a given input region.
  **/
 vote_mapping_t *vote_ensemble_approximate(const vote_ensemble_t *f,
 					  const vote_bound_t* input_region);
