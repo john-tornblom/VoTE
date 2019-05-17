@@ -180,12 +180,21 @@ int main(int argc, char** argv) {
   time_t t = time(NULL);
   for(size_t row=0; row<nb_rows; row++) {
     real_t *sample = &data[row * nb_cols];
+    real_t pred[e->nb_outputs];
     image_t* img = (image_t*)sample;
     int label = (int)sample[e->nb_inputs];
     bool res = true;
 
     fprintf(stderr, "mnist:progress:   %ld/%ld", row, nb_rows);
     fflush(stderr);
+    fprintf(stderr, "\r");
+
+    // don't bother with samples that are classified incorrectly
+    vote_ensemble_eval(e, sample, pred);
+    if(vote_argmax(pred, e->nb_outputs) != label) {
+      continue;
+    }
+    
     for(size_t y=0; y<IMG_HEIGHT-window; y++) {
       for(size_t x=0; x<IMG_WIDTH-window; x++) {
 	image_metadata_t md;
@@ -208,7 +217,6 @@ int main(int argc, char** argv) {
 	}
       }
     }
-    fprintf(stderr, "\r");
     
     if(res) {
       score++;
