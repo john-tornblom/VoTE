@@ -18,7 +18,7 @@
 EXTRA_DIST = setup.py vote.py build.py test.py
 
 all-local:
-	$(PYTHON) setup.py build
+	$(PYTHON) setup.py build --build-lib $(builddir)
 
 clean-local:
 	$(PYTHON) setup.py clean --all
