@@ -31,15 +31,18 @@ AC_SUBST([LIBJSON_CFLAGS])
 AC_SUBST([LIBJSON_LIBS])
 
 # Checks for header files.
-AC_CHECK_HEADERS([stddef.h stdlib.h string.h])
+AC_CHECK_HEADERS([stddef.h math.h])
+AC_HEADER_ASSERT
+AC_HEADER_STDC
+AC_HEADER_STDBOOL
 
 # Checks for typedefs, structures, and compiler characteristics.
-AC_CHECK_HEADER_STDBOOL
 AC_TYPE_SIZE_T
 
 # Checks for library functions.
 AC_CHECK_FUNCS([strstr])
 AC_FUNC_MALLOC
+AC_FUNC_MEMCMP
 
 AM_INIT_AUTOMAKE([foreign])
 AM_PROG_CC_STDC
