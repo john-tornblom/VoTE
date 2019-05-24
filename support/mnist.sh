@@ -26,7 +26,7 @@ done
 #
 # Gradient Boosting
 #
-for params in {"5 75","5 150","5 300","10 25","10 50","10 100"}; do
+for params in {"5 25","5 50","5 75","10 25","10 50","10 75"}; do
     params=($params)
     d=${params[0]}
     B=${params[1]}
@@ -48,10 +48,9 @@ for params in {"5 75","5 150","5 300","10 25","10 50","10 100"}; do
 #	$RANGE_ARG \
 #	>> mnist.gb.B${B}.d${d}.log || exit 1
 	
-    $SCRIPTDIR/../examples/vote_mnist_window_robustness \
+    $SCRIPTDIR/../src/vote_robustness \
 	mnist.gb.B${B}.d${d}.json \
 	$SCRIPTDIR/data/mnist.test.csv \
-	5 \
 	1 \
 	>> mnist.gb.B${B}.d${d}.log || exit 1
 done
@@ -60,7 +59,7 @@ done
 #
 # Random forests
 #
-for params in {"10 20","10 25","15 20","15 25","20 20","20 25"}; do
+for params in {"5 25","5 50","5 75","10 25","10 50","10 75"}; do
     params=($params)
     d=${params[0]}
     B=${params[1]}
@@ -82,10 +81,9 @@ for params in {"10 20","10 25","15 20","15 25","20 20","20 25"}; do
 	$RANGE_ARG \
 	>> mnist.rf.B${B}.d${d}.log || exit 1
 	
-    $SCRIPTDIR/../examples/vote_mnist_window_robustness \
+    $SCRIPTDIR/../src/vote_robustness \
 	mnist.rf.B${B}.d${d}.json \
 	$SCRIPTDIR/data/mnist.test.csv \
-	5 \
 	1 \
 	>> mnist.rf.B${B}.d${d}.log || exit 1
 done

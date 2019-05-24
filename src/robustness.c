@@ -1,4 +1,4 @@
-/* Copyright (C) 2018 John Törnblom
+/* Copyright (C) 2019 John Törnblom
 
 This program is free software; you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -25,12 +25,12 @@ along with this program; see the file COPYING. If not, see
 #include <vote.h>
 
 
-static bool
+static vote_outcome_t
 is_correct(void *ctx, vote_mapping_t *m) {
   real_t *sample = ctx;
-  int pred = vote_mapping_argmax(m);
-  int label = (int)roundf(sample[m->nb_inputs]);
-  return pred == label;
+  size_t expected = (size_t)roundf(sample[m->nb_inputs]);
+  
+  return vote_mapping_check_argmax(m, expected);
 }
 
 
@@ -74,29 +74,52 @@ int main(int argc, char** argv) {
   printf("robustness:nb_samples: %ld\n", nb_rows);
   printf("robustness:threshold:  %f\n", threshold);
 
-  time_t t = time(NULL);
+  time_t start_time = time(NULL);
+  time_t max_sample_time = 0;
+  
   for(size_t row=0; row<nb_rows; row++) {
+    fprintf(stderr, "robustness:progress:   %ld/%ld", row+1, nb_rows);
+    fflush(stderr);
+    fprintf(stderr, "\r");
+    
     real_t *sample = &data[row * nb_cols];
     vote_bound_t bounds[e->nb_inputs];
 
     for(size_t i=0; i<e->nb_inputs; i++) {
-      bounds[i].lower = sample[i] - threshold;
-      bounds[i].upper = sample[i] + threshold;
+      bounds[i].lower = sample[i];
+      bounds[i].upper = sample[i];
     }
 
-    fprintf(stderr, "robustness:progress:   %ld/%ld", row, nb_rows);
-    fflush(stderr);
+    // don't bother with samples that are classified incorrectly
+    vote_mapping_t *m = vote_ensemble_approximate(e, bounds);
+    vote_outcome_t o = is_correct(sample, m);
+    vote_mapping_del(m);
+
+    assert(o != VOTE_UNSURE);
+    if(o != VOTE_PASS) {
+      continue;
+    }
     
-    score += vote_ensemble_forall(e, bounds, is_correct, sample);
-    
-    fprintf(stderr, "\r");
+    for(size_t i=0; i<e->nb_inputs; i++) {
+      bounds[i].lower -= threshold;
+      bounds[i].upper += threshold;
+    }
+
+    time_t sample_time = time(NULL);
+    score += vote_ensemble_absref(e, bounds, is_correct, sample);
+    sample_time = time(NULL) - sample_time;
+
+    if(sample_time > max_sample_time) {
+      max_sample_time = sample_time;
+    }
   }
   
   vote_ensemble_del(e);
   free(data);
 
   printf("robustness:score:      %f\n", score/nb_rows);
-  printf("robustness:runtime:    %lds\n", time(NULL) - t);
+  printf("robustness:runtime:    %lds\n", time(NULL) - start_time);
+  printf("robustness:maxtime:    %lds\n", max_sample_time);
   
   return 0;
 }

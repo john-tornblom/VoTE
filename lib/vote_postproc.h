@@ -16,18 +16,19 @@ You should have received a copy of the GNU Lesser General Public
 License along with VoTE; see the files COPYING and COPYING.LESSER. If not,
 see <http://www.gnu.org/licenses/>.  */
 
-#ifndef VOTE_REFINERY_H
-#define VOTE_REFINERY_H
+#ifndef VOTE_POSTPROC_H
+#define VOTE_POSTPROC_H
 
 
 #include "vote.h"
-#include "vote_tree.h"
+#include "vote_pipeline.h"
 
 
 /**
- * Create a refinary component for a pipeline.
+ * Create a post-processing component for a pipeline.
  **/
-vote_pipeline_t* vote_refinary_pipeline(const vote_tree_t *t);
+vote_pipeline_t* vote_postproc_pipeline(const vote_ensemble_t *e, void *user_ctx,
+					vote_mapping_cb_t *user_cb);
+  
 
-
-#endif //VOTE_REFINERY_H
+#endif //VOTE_POSTPROC_H

@@ -27,6 +27,11 @@ from _vote import ffi, lib
 __version__ = ffi.string(lib.vote_version())
 
 
+UNSURE = -1
+FAIL = 0
+PASS = 1
+
+
 def argmax(iterable):
     '''
     Returns the index of the largest value in an *iterable* of numbers
@@ -43,6 +48,13 @@ def argmin(iterable):
     return lib.vote_argmin(fvec, len(fvec))
 
 
+def mapping_precise(mapping):
+    '''
+    Check if a *mapping* is precise, i.e. the output is a single point.
+    '''
+    return lib.vote_mapping_precise(mapping)
+
+
 def mapping_argmax(mapping):
     '''
     Returns the index of the largest value in a *mapping*
@@ -50,11 +62,25 @@ def mapping_argmax(mapping):
     return lib.vote_mapping_argmax(mapping)
 
 
+def mapping_check_argmax(mapping, expected):
+    '''
+    Check if the argmax of a *mapping* is as *expected*.
+    '''
+    return lib.vote_mapping_check_argmax(mapping, expected)
+
+
 def mapping_argmin(mapping):
     '''
     Returns the index of the smallest value in a *mapping*
     '''
     return lib.vote_mapping_argmin(mapping)
+
+
+def mapping_check_argmin(mapping, expected):
+    '''
+    Check if the argmin of a *mapping* is as *expected*.
+    '''
+    return lib.vote_mapping_check_argmin(mapping, expected)
 
 
 @ffi.def_extern()
@@ -108,12 +134,12 @@ class Ensemble(object):
 
     def forall(self, callback, domain=None):
         '''
-        Enumerate all feasible mappings of this ensemble for some input *domain*
-        until the *callback* function returns false, or all mappings
+        Enumerate all conclusive mappings of this ensemble for some input *domain*
+        until the *callback* function returns FAIL, or all mappings
         have been iterated.
 
-        Returns true if all mappings were accepted by the callback function, or
-        false if the iteration was canceled.
+        Returns true if all mappings PASS the callback function, or
+        false if any of the mappings FAIL the callback function.
         '''
         ctx = ffi.NULL
         bounds = ffi.new('vote_bound_t[%d]' % self.nb_inputs)
@@ -131,24 +157,31 @@ class Ensemble(object):
         ctx = ffi.new_handle(callback)
         cb = lib.vote_mapping_python_cb
         return lib.vote_ensemble_forall(self.ptr, bounds, cb, ctx)
-    
-    def any(self, callback, domain=None):
-        '''
-        Enumerate all feasible mappings of this ensemble for some input *domain*
-        until the *callback* function returns true, or all mappings
-        have been iterated.
 
-        Returns true if any mapping were accepted by the callback function, or
-        false if the iteration was canceled.
+    def absref(self, callback, domain=None):
         '''
-        found = False
+        Enumerate abstract mappings of this ensemble using an 
+        abstraction-refinement approach for some input *domain*.
+
+        Returns true if all conclusive mappings PASS the callback function, or
+        false if any of the conclusive mappings FAIL the callback function.
+        '''
+        ctx = ffi.NULL
+        bounds = ffi.new('vote_bound_t[%d]' % self.nb_inputs)
+        cb = ffi.callback('vote_mapping_cb_t')
         
-        def cb(mapping):
-            found = callback(mapping)
-            return not found
+        for ind in range(self.nb_inputs):
+            bounds[ind].lower = -float('inf')
+            bounds[ind].upper = float('inf')
 
-        self.forall(cb, domain)
-        return found
+        domain = domain or list()
+        for ind, bound in enumerate(domain):
+            bounds[ind].lower = bound[0]
+            bounds[ind].upper = bound[1]
+            
+        ctx = ffi.new_handle(callback)
+        cb = lib.vote_mapping_python_cb
+        return lib.vote_ensemble_absref(self.ptr, bounds, cb, ctx)
 
     def approximate(self, domain=None):
         '''

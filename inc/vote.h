@@ -81,10 +81,21 @@ typedef struct vote_ensemble {
 
 
 /**
- * Callback function prototype used to iterate input/output mappings.
- * returning false cancels iterations.
+ * The outcome of a property checker can be inconclusive when approximations
+ * are too conservative.
  **/
-typedef bool (vote_mapping_cb_t)(void *ctx, vote_mapping_t *mapping);
+typedef enum vote_outcome {
+  VOTE_UNSURE = -1,
+  VOTE_FAIL   = 0,
+  VOTE_PASS   = 1
+} vote_outcome_t;
+
+
+/**
+ * Callback function prototype used to iterate input/output mappings.
+ * Returning a conclusive outcome (pass/fail) stops the iterations.
+ **/
+typedef vote_outcome_t (vote_mapping_cb_t)(void *ctx, vote_mapping_t *mapping);
 
 
 /**
@@ -129,9 +140,20 @@ vote_mapping_t* vote_mapping_copy(const vote_mapping_t* m);
 
 
 /**
- * Join two mappings.
+ * Check if the argmax of a mapping is as expected.
  **/
-void vote_mapping_join(const vote_mapping_t *m, vote_mapping_t *j);
+vote_outcome_t vote_mapping_check_argmax(const vote_mapping_t* m, size_t expected);
+
+/**
+ * Check if the argmin of a mapping is as expected.
+ **/
+vote_outcome_t vote_mapping_check_argmin(const vote_mapping_t* m, size_t expected);
+
+
+/**
+ * Check if a mapping is precise (lower and upper output bounds).
+ **/
+bool vote_mapping_precise(const vote_mapping_t* m);
 
 
 /**
@@ -176,14 +198,21 @@ void vote_ensemble_eval(const vote_ensemble_t* f, const real_t *inputs,
 
 
 /**
- * Iterate all feasible mappings of an ensemble for some input region
- * until the callback function returns false, or all mappings
- * have been iterated.
+ * Iterate all feasible mappings of an ensemble for some input region.
  *
- * Returns true if all mappings were accepted by the callback function, or false
- * if the iteration was canceled.
+ * Returns true if all mappings were satisified, and false if any were unsatisfied.
  **/
 bool vote_ensemble_forall(const vote_ensemble_t *f, const vote_bound_t* input_region,
+			  vote_mapping_cb_t *cb, void* ctx);
+
+
+/**
+ * Iterate abstract mappings of an ensemble using a abstraction-refinement approach
+ * for some input region.
+ *
+ * Returns true if all mappings were satisified, and false if any were unsatisfied.
+ **/
+bool vote_ensemble_absref(const vote_ensemble_t *f, const vote_bound_t* input_region,
 			  vote_mapping_cb_t *cb, void* ctx);
 
 

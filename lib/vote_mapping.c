@@ -1,4 +1,4 @@
-/* Copyright (C) 2018 John Törnblom
+/* Copyright (C) 2019 John Törnblom
 
    This file is part of VoTE (Verifier of Tree Ensembles).
 
@@ -91,17 +91,36 @@ vote_mapping_argmax(const vote_mapping_t* m) {
     }
   }
 
-  if(m->outputs[k].lower == m->outputs[k].upper) {
-    return k;
-  }
-
+  // check for overlap with other classes
   for(size_t i=0; i<m->nb_outputs; i++) {
-    if(m->outputs[i].upper > m->outputs[k].lower && i != k) {
+    if(m->outputs[i].upper >= m->outputs[k].lower && i != k) {
       return -1;
     }
   }
 
   return k;
+}
+
+
+vote_outcome_t
+vote_mapping_check_argmax(const vote_mapping_t* m, size_t expected) {
+  size_t k = 1;
+  assert(m->nb_outputs > expected);
+  
+  for(size_t i=0; i<m->nb_outputs; i++) {
+    if(m->outputs[expected].upper < m->outputs[i].lower) {
+      return VOTE_FAIL;
+    }
+
+    k += (m->outputs[expected].lower >= m->outputs[i].upper &&
+	  expected != i);
+  }
+
+  if(k == m->nb_outputs) {
+    return VOTE_PASS;
+  }
+  
+  return VOTE_UNSURE;
 }
 
 
@@ -116,12 +135,9 @@ vote_mapping_argmin(const vote_mapping_t* m) {
     }
   }
 
-  if(m->outputs[k].lower == m->outputs[k].upper) {
-    return k;
-  }
-
+  // check for overlap with other classes
   for(size_t i=0; i<m->nb_outputs; i++) {
-    if(m->outputs[i].lower < m->outputs[k].upper && i != k) {
+    if(m->outputs[i].lower <= m->outputs[k].upper && i != k) {
       return -1;
     }
   }
@@ -130,16 +146,36 @@ vote_mapping_argmin(const vote_mapping_t* m) {
 }
 
 
-void
-vote_mapping_join(const vote_mapping_t *m, vote_mapping_t *join) {
-  for(size_t i=0; i<m->nb_inputs; i++) {
-    join->inputs[i].lower = vote_min(join->inputs[i].lower, m->inputs[i].lower);
-    join->inputs[i].upper = vote_max(join->inputs[i].upper, m->inputs[i].upper);
-  }
+bool
+vote_mapping_precise(const vote_mapping_t* m) {
 
   for(size_t i=0; i<m->nb_outputs; i++) {
-    join->outputs[i].lower = vote_min(join->outputs[i].lower, m->outputs[i].lower);
-    join->outputs[i].upper = vote_max(join->outputs[i].upper, m->outputs[i].upper);
+    if(m->outputs[i].lower != m->outputs[i].upper) {
+      return false;
+    }
   }
+
+  return true;
 }
 
+
+vote_outcome_t
+vote_mapping_check_argmin(const vote_mapping_t* m, size_t expected) {
+  size_t k = 1;
+  assert(m->nb_outputs > expected);
+  
+  for(size_t i=0; i<m->nb_outputs; i++) {
+    if(m->outputs[expected].lower > m->outputs[i].upper) {
+      return VOTE_FAIL;
+    }
+
+    k += (m->outputs[expected].upper <= m->outputs[i].lower &&
+	  expected != i);
+  }
+
+  if(k == m->nb_outputs) {
+    return VOTE_PASS;
+  }
+  
+  return VOTE_UNSURE;
+}

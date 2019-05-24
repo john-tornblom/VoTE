@@ -1,4 +1,4 @@
-/* Copyright (C) 2018 John Törnblom
+/* Copyright (C) 2019 John Törnblom
 
    This file is part of VoTE (Verifier of Tree Ensembles).
 
@@ -16,7 +16,6 @@ You should have received a copy of the GNU Lesser General Public
 License along with VoTE; see the files COPYING and COPYING.LESSER. If not,
 see <http://www.gnu.org/licenses/>.  */
 
-
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
@@ -25,7 +24,10 @@ see <http://www.gnu.org/licenses/>.  */
 #include "vote.h"
 #include "vote_math.h"
 #include "vote_tree.h"
+#include "vote_pipeline.h"
 #include "vote_refinary.h"
+#include "vote_abstract.h"
+#include "vote_postproc.h"
 
 
 vote_ensemble_t*
@@ -80,7 +82,6 @@ vote_ensemble_load(const char *filename) {
 }
 
 
-
 void
 vote_ensemble_del(vote_ensemble_t *e) {
   for(size_t i=0; i<e->nb_trees; i++) {
@@ -92,231 +93,122 @@ vote_ensemble_del(vote_ensemble_t *e) {
 }
 
 
-/**
- * Keep track of data used in the final pipeline.
- **/
-typedef struct vote_ensemble_callout {
-  vote_mapping_cb_t *user_cb;
-  void              *user_ctx;
-  size_t             nb_trees;
-} vote_ensemble_callout_t;
+bool
+vote_ensemble_forall(const vote_ensemble_t *e, const vote_bound_t *inputs,
+		     vote_mapping_cb_t *user_cb, void *user_ctx) {
+  vote_pipeline_t *head = vote_postproc_pipeline(e, user_ctx, user_cb);
+    
+  for(size_t i=0; i<e->nb_trees; i++) {
+    vote_pipeline_t *sink = head;
+    head = vote_refinary_pipeline(e->trees[e->nb_trees-i-1]);
+    vote_pipeline_connect(head, sink);
+  }    
 
+  vote_mapping_t *m = vote_mapping_new(e->nb_inputs, e->nb_outputs);
+  memcpy(m->inputs, inputs, e->nb_inputs * sizeof(vote_bound_t));
+  vote_outcome_t o = vote_pipeline_input(head, m);
 
-/**
- *
- **/
-static void
-vote_ensemble_divisor(vote_mapping_t *m, size_t nb_trees) {
-  for(size_t i=0; i<m->nb_outputs; i++) {
-    m->outputs[i].lower /= nb_trees;
-    m->outputs[i].upper /= nb_trees;
-  }
-}
-
-/**
- * Final pipeline which applies the softmax function to output scalars, then 
- * calls out to the user.
- **/
-static void
-vote_ensemble_softmax(vote_mapping_t *m) {
-  vote_bound_t logsumexp = {0, 0};
-  real_t max = 0;
-
-#ifdef USE_DOUBLE
-  for(size_t i=0; i<m->nb_outputs; i++) {
-    max = vote_max(max, m->outputs[i].upper);
-  }
-#endif
-
-  for(size_t i=0; i<m->nb_outputs; i++) {
-    logsumexp.lower += vote_exp(m->outputs[i].lower - max);
-    logsumexp.upper += vote_exp(m->outputs[i].upper - max);
-  }
-
-  logsumexp.lower = vote_log(logsumexp.lower);
-  logsumexp.upper = vote_log(logsumexp.upper);
+  vote_mapping_del(m);
+  vote_pipeline_del(head);
   
-  logsumexp.lower += max;
-  logsumexp.upper += max;
-  
-  for(size_t i=0; i<m->nb_outputs; i++) {
-    m->outputs[i].lower = vote_exp(m->outputs[i].lower - logsumexp.upper);
-    m->outputs[i].upper = vote_exp(m->outputs[i].upper - logsumexp.lower);
-    assert(m->outputs[i].lower <= m->outputs[i].upper);
-  }
-}
-
-
-/**
- * Final pipeline for a random forest which divide outputs with the number of
- * trees, then calls out to the user.
- **/
-static bool
-pipe_divisor_callout(void* ctx, vote_mapping_t *m) {
-  vote_ensemble_callout_t *co = ctx;
-  vote_ensemble_divisor(m, co->nb_trees);
-  return co->user_cb(co->user_ctx, m);
-}
-
-
-/**
- * Final pipeline which applies the softmax function to output scalars, then 
- * calls out to the user.
- **/
-static bool
-pipe_softmax_callout(void* ctx, vote_mapping_t *m) {
-  vote_ensemble_callout_t *co = ctx;
-  vote_ensemble_softmax(m);
-  return co->user_cb(co->user_ctx, m);
-}
-
-
-/**
- * Final pipeline which applies the softmax function to output scalars, then 
- * calls out to the user.
- **/
-static bool
-pipe_raw_callout(void* ctx, vote_mapping_t *m) {
-  vote_ensemble_callout_t *co = ctx;
-  return co->user_cb(co->user_ctx, m);
-}
-
-/**
- * Intermediate pipeline between trees in the ensemble.
- **/
-static bool
-pipe_forall_emit(void* ctx, vote_mapping_t *m) {
-  vote_refinery_t* r = (vote_refinery_t*)ctx;
-  return vote_refinery_emit(r, m);
+  return o == VOTE_PASS;
 }
 
 
 bool
-vote_ensemble_forall(const vote_ensemble_t *e, const vote_bound_t* input_region,
-		   vote_mapping_cb_t *user_cb, void* user_ctx) {
-  vote_ensemble_callout_t co;
-  vote_refinery_t **r;
-  vote_mapping_cb_t *cb;
-  vote_mapping_t* m;
-  bool res;
-  void *ctx;
+vote_ensemble_absref(const vote_ensemble_t *e, const vote_bound_t *inputs,
+		     vote_mapping_cb_t *user_cb, void *user_ctx) {
+  vote_pipeline_t *pp = vote_postproc_pipeline(e, user_ctx, user_cb);
+  vote_pipeline_t *head = NULL;
+  vote_pipeline_t *tail = NULL;
   
-  co.user_cb = user_cb;
-  co.user_ctx = user_ctx;
-  co.nb_trees = e->nb_trees;
-
-  switch(e->post_process) {
-  default:
-  case VOTE_POST_PROCESS_NONE:
-    cb = user_cb;
-    ctx = user_ctx;
-    break;
-  case VOTE_POST_PROCESS_DIVISOR:
-    cb = pipe_divisor_callout;
-    ctx = &co;
-    break;
-  case VOTE_POST_PROCESS_SOFTMAX:
-    cb = pipe_softmax_callout;
-    ctx = &co;
-    break;
-  }
-
-  r = calloc(e->nb_trees, sizeof(vote_refinery_t*));
-  assert(r);
-
   for(size_t i=0; i<e->nb_trees; i++) {
-    ctx = r[i] = vote_refinery_new(e->trees[i], cb, ctx);
-    cb = pipe_forall_emit;
-  }
+    vote_pipeline_t *abs = vote_abstract_pipeline(&e->trees[i], e->nb_trees - i, pp);
+    vote_pipeline_t *ref = vote_refinary_pipeline(e->trees[i]);
+    vote_pipeline_connect(abs, ref);
+    
+    if(tail) {
+      vote_pipeline_connect(tail, abs);
+    }
+    if(!head) {
+      head = abs;
+    }
+    
+    tail = ref;
+  }    
 
-  m = vote_mapping_new(e->nb_inputs, e->nb_outputs);
-  memcpy(m->inputs, input_region, e->nb_inputs * sizeof(vote_bound_t));
-  res = cb(ctx, m);
+  vote_pipeline_connect(tail, pp);
   
+  vote_mapping_t *m = vote_mapping_new(e->nb_inputs, e->nb_outputs);
+  memcpy(m->inputs, inputs, e->nb_inputs * sizeof(vote_bound_t));
+  vote_outcome_t o = vote_pipeline_input(head, m);
+
   vote_mapping_del(m);
-  for(size_t i=0; i<e->nb_trees; i++) {
-    vote_refinery_del(r[i]);
-  }
-  free(r);
+  vote_pipeline_del(head);
   
-  return res;
+  return o == VOTE_PASS;
 }
 
 
 /**
- * Fetch the output from an mapping when a concrete, fully-refined instance is
- * encountered.
+ * Copy the output from a precise mapping to a vector of scalars.
  **/
-static bool
-pipe_eval_compute(void *ctx, vote_mapping_t* m) {
+static vote_outcome_t
+vote_ensemble_copy_scalar_outputs(void *ctx, vote_mapping_t *m) {
   real_t *outputs = ctx;
 
+  assert(vote_mapping_precise(m));
+  
   for(size_t i=0; i<m->nb_outputs; i++) {
-    assert(m->outputs[i].lower == m->outputs[i].upper);
     outputs[i] = m->outputs[i].lower;
   }
 
-  return false;
+  return VOTE_PASS;
 }
 
 
 void
-vote_ensemble_eval(const vote_ensemble_t* e, const real_t *inputs, real_t *outputs) {
-  vote_bound_t bounds[e->nb_inputs];
+vote_ensemble_eval(const vote_ensemble_t *e, const real_t *inputs, real_t *outputs) {
+  vote_bound_t input_region[e->nb_inputs];
 
   for(size_t i=0; i<e->nb_inputs; i++) {
-    bounds[i].lower = inputs[i];
-    bounds[i].upper = inputs[i];
+    input_region[i].lower = inputs[i];
+    input_region[i].upper = inputs[i];
   }
-
-  vote_ensemble_forall(e, bounds, pipe_eval_compute, outputs);
+  
+  for(size_t i=0; i<e->nb_outputs; i++) {
+    outputs[i] = NAN;
+  }
+  
+  vote_ensemble_forall(e, input_region, vote_ensemble_copy_scalar_outputs, outputs);
 }
 
 
-static bool
-pipe_bound_join(void *ctx, vote_mapping_t* m) {
-  vote_mapping_t** join = (vote_mapping_t**)ctx;
-  if(!*join) {
-    *join = vote_mapping_copy(m);
-  } else {
-    vote_mapping_join(m, *join);
-  }
+/**
+ * Copy the output from one abstract mapping to another.
+ **/
+static vote_outcome_t
+vote_ensemble_copy_mapping_outputs(void *ctx, vote_mapping_t *source) {
+  vote_mapping_t *target = (vote_mapping_t*)ctx;
+
+  memcpy(target->outputs, source->outputs,
+	 source->nb_outputs * sizeof(vote_bound_t));
   
-  return true;
+  return VOTE_PASS;
 }
 
 
 vote_mapping_t *
-vote_ensemble_approximate(const vote_ensemble_t *e, const vote_bound_t* input_region) {
-  vote_mapping_t *res = vote_mapping_new(e->nb_inputs, e->nb_outputs);
+vote_ensemble_approximate(const vote_ensemble_t *e, const vote_bound_t *inputs) {
+  vote_mapping_t *m = vote_mapping_new(e->nb_inputs, e->nb_outputs);
+  vote_pipeline_t *pp = vote_postproc_pipeline(e, m, vote_ensemble_copy_mapping_outputs);
+  vote_pipeline_t *a = vote_abstract_pipeline(e->trees, e->nb_trees, pp);
 
-  for(size_t i=0; i<e->nb_trees; i++) {
-    vote_mapping_t* join = NULL;
-    vote_refinery_t *r = vote_refinery_new(e->trees[i], pipe_bound_join, &join);
-    vote_mapping_t *m = vote_mapping_new(e->nb_inputs, e->nb_outputs);
-    memcpy(m->inputs, input_region, e->nb_inputs * sizeof(vote_bound_t));
-    vote_refinery_emit(r, m);
-    vote_refinery_del(r);
-    vote_mapping_del(m);
-
-    assert(join);
-    for(size_t i=0; i<res->nb_outputs; i++) {
-      res->outputs[i].lower += join->outputs[i].lower;
-      res->outputs[i].upper += join->outputs[i].upper;
-    }
-
-    vote_mapping_del(join);
-  }
+  vote_pipeline_connect(a, pp);
+  memcpy(m->inputs, inputs, e->nb_inputs * sizeof(vote_bound_t));
+  vote_pipeline_input(a, m);
   
-  switch(e->post_process) {
-  default:
-  case VOTE_POST_PROCESS_DIVISOR:
-    vote_ensemble_divisor(res, e->nb_trees);
-    break;
-  case VOTE_POST_PROCESS_SOFTMAX:
-    vote_ensemble_softmax(res);
-    break;
-  }
-
-  return res;
+  vote_pipeline_del(a);
+  
+  return m;
 }

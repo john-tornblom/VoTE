@@ -36,10 +36,12 @@ def forall(testcase_cb):
     def mapping_cb(self, m):
         x = [m.inputs[dim] for dim in range(m.nb_inputs)]
         y = [m.outputs[dim] for dim in range(m.nb_outputs)]
-    
-        testcase_cb(self, x, y)
-    
-        return True
+
+        if vote.mapping_precise(m):
+            testcase_cb(self, x, y)
+            return vote.PASS
+        else:
+            return vote.UNSURE
 
     def test_proc(self):
         cb = functools.partial(mapping_cb, self)
@@ -161,10 +163,10 @@ class TestMappingEdges(SimpleVoTETestCase):
         self.assertLessEqual(y.lower, self.f(xmin))
         self.assertGreaterEqual(y.upper, self.f(xmax))
 
-
-class TestNumberOfMappings(SimpleVoTETestCase):
+    
+class TestForAll(SimpleVoTETestCase):
     '''
-    Count number of mappings enumerated by VoTE
+    Count number of conclusive mappings enumerated by VoTE
     '''
     count = 0
 
@@ -173,27 +175,60 @@ class TestNumberOfMappings(SimpleVoTETestCase):
         self.count = 0
 
     def increment_counter(self, m):
+        self.assertTrue(vote.mapping_precise(m))
         self.count += 1
-        
-        return True
+        return vote.PASS
         
     def increment_counter_to_3(self, m):
+        self.assertTrue(vote.mapping_precise(m))
         self.count += 1
+        if self.count < 3:
+            return vote.PASS
+        else:
+            return vote.FAIL
         
-        return self.count < 3
-
     def test_exhaustive_forall(self):
         res = self.ensemble.forall(self.increment_counter)
-        
         self.assertTrue(res)
         self.assertEqual(self.count, 6)
 
     def test_partial_forall(self):
         res = self.ensemble.forall(self.increment_counter_to_3)
-        
         self.assertFalse(res)
         self.assertEqual(self.count, 3)
 
+
+class TestAbsRef(SimpleVoTETestCase):
+    outputs = None
+    expected = set([
+        (0.5, 0.5), 
+        (3, 3),
+        (0.5, 3),
+        (3.5, 3.5), 
+        (2, 2), 
+        (2.5, 2.5),
+        (0.5, 3),   # 1 < x <= 5: 1 + [0, 5]
+        (2, 3.5),   # 5 < x <= 9: 2 + [2, 5]
+        (0, 4)      # all trees abstracted
+    ])
+    
+    def setUp(self):
+        SimpleVoTETestCase.setUp(self)
+        self.outputs = set()
+
+    def add_outputs(self, m):
+        self.outputs.add((m.outputs[0].lower,
+                          m.outputs[0].upper))
+        
+        if vote.mapping_precise(m):
+            return vote.PASS
+        else:
+            return vote.UNSURE
+        
+    def test_exhaustive_absref(self):
+        res = self.ensemble.absref(self.add_outputs)
+        self.assertTrue(res)
+        self.assertEqual(self.expected, self.outputs)
 
 
 class VoTEUtilityTestCase(SimpleVoTETestCase):
@@ -294,6 +329,141 @@ class VoTEUtilityTestCase(SimpleVoTETestCase):
         m.outputs[2].upper = 2
         self.assertEqual(2, vote.mapping_argmax(m))
 
+    def test_mapping_check_argmax_unsure(self):
+        m = self.ensemble.approximate()
+        m.outputs[0].lower = 0
+        m.outputs[0].upper = 1
+        m.outputs[1].lower = 0
+        m.outputs[1].upper = 1
+        m.outputs[2].lower = 1
+        m.outputs[2].upper = 1
+        self.assertEqual(vote.UNSURE, vote.mapping_check_argmax(m, 0))
+        self.assertEqual(vote.UNSURE, vote.mapping_check_argmax(m, 1))
+        self.assertTrue(vote.mapping_check_argmax(m, 2))
         
+    def test_mapping_check_argmax_same(self):
+        m = self.ensemble.approximate()
+        m.outputs[0].lower = 0
+        m.outputs[0].upper = 0
+        m.outputs[1].lower = 0
+        m.outputs[1].upper = 0
+        m.outputs[2].lower = 0
+        m.outputs[2].upper = 0
+        self.assertTrue(vote.mapping_check_argmax(m, 0))
+        self.assertTrue(vote.mapping_check_argmax(m, 1))
+        self.assertTrue(vote.mapping_check_argmax(m, 2))
+
+    def test_mapping_check_argmax_last(self):
+        m = self.ensemble.approximate()
+        m.outputs[0].lower = 0
+        m.outputs[0].upper = 0
+        m.outputs[1].lower = 1
+        m.outputs[1].upper = 1
+        m.outputs[2].lower = 2
+        m.outputs[2].upper = 2
+        self.assertFalse(vote.mapping_check_argmax(m, 0))
+        self.assertFalse(vote.mapping_check_argmax(m, 1))
+        self.assertTrue(vote.mapping_check_argmax(m, 2))
+
+    def test_mapping_check_argmax_middle(self):
+        m = self.ensemble.approximate()
+        m.outputs[0].lower = 0
+        m.outputs[0].upper = 0
+        m.outputs[1].lower = 1
+        m.outputs[1].upper = 1
+        m.outputs[2].lower = 0
+        m.outputs[2].upper = 0
+        self.assertFalse(vote.mapping_check_argmax(m, 0))
+        self.assertTrue(vote.mapping_check_argmax(m, 1))
+        self.assertFalse(vote.mapping_check_argmax(m, 2))
+
+    def test_mapping_check_argmax_first(self):
+        m = self.ensemble.approximate()
+        m.outputs[0].lower = 1
+        m.outputs[0].upper = 1
+        m.outputs[1].lower = 0
+        m.outputs[1].upper = 0
+        m.outputs[2].lower = 0
+        m.outputs[2].upper = 0
+        self.assertTrue(vote.mapping_check_argmax(m, 0))
+        self.assertFalse(vote.mapping_check_argmax(m, 1))
+        self.assertFalse(vote.mapping_check_argmax(m, 2))
+
+    def test_mapping_check_argmin_unsure(self):
+        m = self.ensemble.approximate()
+        m.outputs[0].lower = 0
+        m.outputs[0].upper = 1
+        m.outputs[1].lower = 0
+        m.outputs[1].upper = 1
+        m.outputs[2].lower = 0
+        m.outputs[2].upper = 0
+        self.assertEqual(vote.UNSURE, vote.mapping_check_argmin(m, 0))
+        self.assertEqual(vote.UNSURE, vote.mapping_check_argmin(m, 1))
+        self.assertTrue(vote.mapping_check_argmin(m, 2))
+        
+    def test_mapping_check_argmin_same(self):
+        m = self.ensemble.approximate()
+        m.outputs[0].lower = 0
+        m.outputs[0].upper = 0
+        m.outputs[1].lower = 0
+        m.outputs[1].upper = 0
+        m.outputs[2].lower = 0
+        m.outputs[2].upper = 0
+        self.assertTrue(vote.mapping_check_argmin(m, 0))
+        self.assertTrue(vote.mapping_check_argmin(m, 1))
+        self.assertTrue(vote.mapping_check_argmin(m, 2))
+
+    def test_mapping_check_argmin_last(self):
+        m = self.ensemble.approximate()
+        m.outputs[0].lower = 2
+        m.outputs[0].upper = 2
+        m.outputs[1].lower = 1
+        m.outputs[1].upper = 1
+        m.outputs[2].lower = 0
+        m.outputs[2].upper = 0
+        self.assertFalse(vote.mapping_check_argmin(m, 0))
+        self.assertFalse(vote.mapping_check_argmin(m, 1))
+        self.assertTrue(vote.mapping_check_argmin(m, 2))
+
+    def test_mapping_check_argmin_middle(self):
+        m = self.ensemble.approximate()
+        m.outputs[0].lower = 1
+        m.outputs[0].upper = 1
+        m.outputs[1].lower = 0
+        m.outputs[1].upper = 0
+        m.outputs[2].lower = 1
+        m.outputs[2].upper = 1
+        self.assertFalse(vote.mapping_check_argmin(m, 0))
+        self.assertTrue(vote.mapping_check_argmin(m, 1))
+        self.assertFalse(vote.mapping_check_argmin(m, 2))
+
+    def test_mapping_check_argmin_first(self):
+        m = self.ensemble.approximate()
+        m.outputs[0].lower = 0
+        m.outputs[0].upper = 0
+        m.outputs[1].lower = 1
+        m.outputs[1].upper = 1
+        m.outputs[2].lower = 1
+        m.outputs[2].upper = 1
+        self.assertTrue(vote.mapping_check_argmin(m, 0))
+        self.assertFalse(vote.mapping_check_argmin(m, 1))
+        self.assertFalse(vote.mapping_check_argmin(m, 2))
+
+    def test_mapping_precise(self):
+        m = self.ensemble.approximate()
+        m.outputs[0].lower = 0
+        m.outputs[0].upper = 0
+        m.outputs[1].lower = 1
+        m.outputs[1].upper = 1
+        m.outputs[2].lower = 2
+        m.outputs[2].upper = 2
+
+        for dim in range(3):
+            self.assertTrue(vote.mapping_precise(m))
+            m.outputs[dim].upper += 1
+            self.assertFalse(vote.mapping_precise(m))
+            m.outputs[dim].lower += 1
+
+
 if __name__ == "__main__":
     unittest.main()

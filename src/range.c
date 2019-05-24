@@ -25,24 +25,50 @@ along with this program; see the file COPYING. If not, see
 
 
 /**
+ * Print a mapping to stdout.
+ */
+static void
+dump_mapping(vote_mapping_t *m) {
+  for(size_t i=0; i<m->nb_inputs; i++) {
+    if(i) {
+      printf("\n                       ");
+    }
+    printf("x%ld in [%f, %f]", i, m->inputs[i].lower, m->inputs[i].upper);
+  }
+  
+  for(size_t i=0; i<m->nb_outputs; i++) {
+    printf("\n                       ");
+    printf("y%ld in [%f, %f]", i, m->outputs[i].lower, m->outputs[i].upper);
+  }
+  printf("\n");
+}
+
+
+/**
  * Check if there are points in the ouput that fall
  * outside a given range.
  */
-static bool
+static vote_outcome_t
 is_within_range(void *ctx, vote_mapping_t *m) {
   vote_bound_t *range = (vote_bound_t *)ctx;
+  size_t nb_pass_dims = 0;
+  bool precise = true;
   
   for(size_t i=0; i<m->nb_outputs; i++) {
-    if(m->outputs[i].lower < range[i].lower) {
-      return false;
-    }
-
-    if(m->outputs[i].upper > range[i].upper) {
-      return false;
-    }
+    precise &= (m->outputs[i].lower == m->outputs[i].upper);
+    nb_pass_dims += (m->outputs[i].lower >= range[i].lower &&
+		     m->outputs[i].upper <= range[i].upper);
   }
-  
-  return true;
+
+  if(nb_pass_dims == m->nb_outputs) {
+    return VOTE_PASS;
+  } else if(precise) {
+    printf("range:counter-example: ");
+    dump_mapping(m);
+    return VOTE_FAIL;
+  } else {
+    return VOTE_UNSURE;
+  }
 }
  
 
@@ -55,7 +81,7 @@ int main(int argc, char** argv) {
   bool b;
   
   if(argc < 2) {
-    printf("usage: %s <model file> <min y1> <max y1> <min y2> <max y2>...\n",
+    printf("usage: %s <model file> <min y0> <max y0> <min y1> <max y1>...\n",
 	   argv[0]);
     return 1;
   }
@@ -70,36 +96,42 @@ int main(int argc, char** argv) {
     exit(1);
   }
 
-  printf("range:filename:   %s\n", argv[1]);
-  printf("range:nb_inputs:  %ld\n", e->nb_inputs);
-  printf("range:nb_outputs: %ld\n", e->nb_outputs);
-  printf("range:nb_trees:   %ld\n", e->nb_trees);
-  printf("range:nb_nodes:   %ld\n", e->nb_nodes);
+  printf("range:filename:        %s\n", argv[1]);
+  printf("range:nb_inputs:       %ld\n", e->nb_inputs);
+  printf("range:nb_outputs:      %ld\n", e->nb_outputs);
+  printf("range:nb_trees:        %ld\n", e->nb_trees);
+  printf("range:nb_nodes:        %ld\n", e->nb_nodes);
 
   time_t t = time(NULL);
+
+  printf("range:requirement:     ");
   vote_bound_t domain[e->nb_inputs];
   for(size_t i=0; i<e->nb_inputs; i++) {
     domain[i].lower = -INFINITY;
     domain[i].upper = INFINITY;
+
+    if(i) {
+      printf("\n                       ");
+    }
+    printf("x%ld in [%f, %f]", i, domain[i].lower, domain[i].upper);
   }
 
   vote_bound_t range[e->nb_outputs];
   for(size_t i=0; i<e->nb_outputs; i++) {
     range[i].lower = atof(argv[2+(i*2)]);
     range[i].upper = atof(argv[3+(i*2)]);
-  }
 
-  m = vote_ensemble_approximate(e, domain);
-  assert(m);
+    printf("\n                       ");
+    printf("y%ld in [%f, %f]", i, range[i].lower, range[i].upper);
+  }
+  printf("\n");
+
   
-  b = (is_within_range(range, m) ||
-       vote_ensemble_forall(e, domain, is_within_range, range));
-       
-  vote_mapping_del(m);
+  b = vote_ensemble_absref(e, domain, is_within_range, range);
   vote_ensemble_del(e);
 
-  printf("range:result:     %s\n", b ? "pass" : "fail");
-  printf("range:runtime:    %lds\n", time(NULL) - t);
+  printf("range:result:          %s\n", b ? "pass" : "fail");
+  printf("range:runtime:         %lds\n", time(NULL) - t);
   
   return !b;
 }

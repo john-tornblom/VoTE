@@ -1,4 +1,4 @@
-/* Copyright (C) 2018 John Törnblom
+/* Copyright (C) 2019 John Törnblom
 
    This file is part of VoTE (Verifier of Tree Ensembles).
 
@@ -21,38 +21,27 @@ see <http://www.gnu.org/licenses/>.  */
 #include <string.h>
 
 #include "vote.h"
+#include "vote_pipeline.h"
 #include "vote_refinary.h"
-#include "vote_tree.h"
 #include "vote_math.h"
 
 
-static bool emit_leaves(vote_refinery_t* r, vote_mapping_t *m, size_t node_id);
+typedef struct vote_refinery {
+  const vote_tree_t     *tree;
+  const vote_pipeline_t *pipeline;
+} vote_refinery_t;
 
 
-vote_refinery_t*
-vote_refinery_new(const vote_tree_t *t, vote_mapping_cb_t *cb, void* ctx) {
-  vote_refinery_t* r = calloc(1, sizeof(vote_refinery_t));
-  assert(r);
-
-  r->tree     = t;
-  r->emit_cb  = cb;
-  r->emit_ctx = ctx;
-  
-  return r;
-}
-
-
-void
-vote_refinery_del(vote_refinery_t* r) {
-  free(r);
-}
+static bool vote_refinery_decend(const vote_refinery_t *r, size_t node_id,
+				 vote_mapping_t *m);
 
 
 /**
  * Decend into children of a node, starting with the left child.
  **/
 static bool
-descend_left_first(vote_refinery_t* r, vote_mapping_t *m, size_t node_id) {
+vote_refinery_decend_left(const vote_refinery_t *r, size_t node_id,
+			  vote_mapping_t *m) {
   int left_id = r->tree->left[node_id];
   int right_id = r->tree->right[node_id];
   real_t threshold = r->tree->threshold[node_id];
@@ -74,7 +63,7 @@ descend_left_first(vote_refinery_t* r, vote_mapping_t *m, size_t node_id) {
     if(msplit.inputs[dim].upper > threshold) {
       msplit.inputs[dim].upper = threshold;
     }
-    if(!emit_leaves(r, &msplit, left_id)) {
+    if(!vote_refinery_decend(r, left_id, &msplit)) {
       return false;
     }
   }
@@ -84,7 +73,7 @@ descend_left_first(vote_refinery_t* r, vote_mapping_t *m, size_t node_id) {
     if(m->inputs[dim].lower < threshold) {
       m->inputs[dim].lower = vote_nextafter(threshold, INFINITY);
     }
-    return emit_leaves(r, m, right_id);
+    return vote_refinery_decend(r, right_id, m);
   }
   return true;
 }
@@ -94,7 +83,8 @@ descend_left_first(vote_refinery_t* r, vote_mapping_t *m, size_t node_id) {
  * Decend into children of a node, starting with the right child.
  **/
 static bool
-descend_right_first(vote_refinery_t* r, vote_mapping_t *m, size_t node_id) {
+vote_refinery_decend_right(const vote_refinery_t *r, size_t node_id,
+			   vote_mapping_t *m) {
   int left_id = r->tree->left[node_id];
   int right_id = r->tree->right[node_id];
   real_t threshold = r->tree->threshold[node_id];
@@ -117,7 +107,7 @@ descend_right_first(vote_refinery_t* r, vote_mapping_t *m, size_t node_id) {
     if(msplit.inputs[dim].lower < threshold) {
       msplit.inputs[dim].lower = vote_nextafter(threshold, INFINITY);
     }
-    if(!emit_leaves(r, &msplit, right_id)) {
+    if(!vote_refinery_decend(r, right_id, &msplit)) {
       return false;
     }
   }
@@ -128,20 +118,22 @@ descend_right_first(vote_refinery_t* r, vote_mapping_t *m, size_t node_id) {
       m->inputs[dim].upper = threshold;
     }
 
-    return emit_leaves(r, m, left_id);
+    return vote_refinery_decend(r, left_id, m);
   }
   return true;
 }
 
 
 /**
- * Emit mappings associated with a node.
+ * Decend into children of a node, starting with the child with the least input
+ * space.
  **/
 static bool
-emit_leaves(vote_refinery_t* r, vote_mapping_t *m, size_t node_id) {
+vote_refinery_decend(const vote_refinery_t *r, size_t node_id,
+		     vote_mapping_t *m) {
   int left_id = r->tree->left[node_id];
   int right_id = r->tree->right[node_id];
-
+  
   // leaf node encountered, emit mapping
   if(left_id < 0 || right_id < 0) {
     assert(left_id < 0 && right_id < 0);
@@ -150,11 +142,10 @@ emit_leaves(vote_refinery_t* r, vote_mapping_t *m, size_t node_id) {
       m->outputs[i].upper += r->tree->value[node_id][i];
       m->outputs[i].lower += r->tree->value[node_id][i];
     }
-    
-    return r->emit_cb(r->emit_ctx, m);
+
+    return vote_pipeline_output(r->pipeline, m) == VOTE_PASS;
   }
 
-  // intermediate node encountered, decend into children (least volume first).
   //
   //        left       right
   //   |-----------|-----------|
@@ -167,15 +158,36 @@ emit_leaves(vote_refinery_t* r, vote_mapping_t *m, size_t node_id) {
   real_t left_width = threshold - m->inputs[dim].lower;
 
   if(left_width < right_width) {
-    return descend_left_first(r, m, node_id);
+    return vote_refinery_decend_left(r, node_id, m);
   } else {
-    return descend_right_first(r, m, node_id);
+    return vote_refinery_decend_right(r, node_id, m);
   }  
 }
 
 
-bool
-vote_refinery_emit(vote_refinery_t* r, vote_mapping_t *m) {
-  const size_t root_id = 0;
-  return emit_leaves(r, m, root_id);
+/**
+ * Apply the refining algorithm on a mapping.
+ **/
+static vote_outcome_t
+vote_refinery_input(void *ctx, vote_mapping_t *m) {
+  vote_refinery_t *r = (vote_refinery_t*)ctx;
+  if(vote_refinery_decend(r, 0, m)) {
+    return VOTE_PASS;
+  } else {
+    return VOTE_FAIL;
+  }
+}
+
+
+vote_pipeline_t*
+vote_refinary_pipeline(const vote_tree_t *t) {
+  vote_refinery_t *r = calloc(1, sizeof(vote_refinery_t));
+  vote_pipeline_t *p = vote_pipeline_new(r, vote_refinery_input, free);
+  
+  assert(r);
+
+  r->tree     = t;
+  r->pipeline = p;
+
+  return p;
 }

@@ -1,4 +1,4 @@
-#   Copyright (C) 2018 John Törnblom
+#   Copyright (C) 2019 John Törnblom
 #
 # This file is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -19,10 +19,13 @@ lib_LTLIBRARIES = libvote.la
 libvote_la_CFLAGS = -I../inc -std=c99 -D_DEFAULT_SOURCE -Wextra -Werror \
                     -pedantic -Wdouble-promotion -Wfloat-conversion -fPIC \
                     @LIBJSON_CFLAGS@
-libvote_la_SOURCES = vote_ensemble.c \
-                     vote_mapping.c \
-                     vote_refinary.c \
+libvote_la_SOURCES = vote_mapping.c \
                      vote_tree.c \
+                     vote_ensemble.c \
+                     vote_pipeline.c \
+                     vote_refinary.c \
+                     vote_abstract.c \
+                     vote_postproc.c \
                      vote_utils.c
 
 libvote_la_LIBADD = @LIBJSON_LIBS@ -lm

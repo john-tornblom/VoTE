@@ -123,14 +123,10 @@ init_image_bound(image_bound_t *b, const image_t *img, const noise_window_t *w) 
 }
 
 
-static bool
+static vote_outcome_t
 is_correct(void *ctx, vote_mapping_t *m) {
   image_metadata_t *md = ctx;
-  if(md->label != vote_mapping_argmax(m)) {
-    if(0) save_image(md, m);
-    return false;
-  }
-  return true;
+  return vote_mapping_check_argmax(m, md->label);
 }
 
 

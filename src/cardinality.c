@@ -1,4 +1,4 @@
-/* Copyright (C) 2018 John Törnblom
+/* Copyright (C) 2019 John Törnblom
 
 This program is free software; you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -23,14 +23,17 @@ along with this program; see the file COPYING. If not, see
 
 
 /**
- * Count number of mappings.
+ * Count number of precise mappings.
  */
-static bool
+static vote_outcome_t
 count_mapping(void *ctx, vote_mapping_t *m) {
-  VOTE_UNUSED(m);
   size_t *nb_mappings = (size_t*)ctx;
+
+  assert(vote_mapping_precise(m));
+  
   (*nb_mappings)++;
-  return true;
+  
+  return VOTE_PASS;
 }
 
 

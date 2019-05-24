@@ -22,16 +22,23 @@ Ensure that the plausibility of range property is satisfied, i.e. that
 
 import sys
 import vote
-  
+
+
 def plausibility_of_range(mapping, alpha=0, beta=1):
     minval = min([mapping.outputs[dim].lower
                   for dim in range(mapping.nb_outputs)])
                    
     maxval = max([mapping.outputs[dim].upper
                   for dim in range(mapping.nb_outputs)])
-                   
-    return (minval >= alpha) and (maxval <= beta)
-    
+
+    if minval >= alpha and maxval <= beta:
+        return vote.PASS
+    elif vote.mapping_precise(mapping):
+        return vote.FAIL
+    else:
+        return vote.UNSURE
+
+
 e = vote.Ensemble(sys.argv[1]) # load model from disk
 assert e.forall(plausibility_of_range)
 

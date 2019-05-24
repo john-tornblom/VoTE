@@ -1,4 +1,4 @@
-/* Copyright (C) 2018 John Törnblom
+/* Copyright (C) 2019 John Törnblom
 
 This program is free software; you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -23,24 +23,27 @@ along with this program; see the file COPYING. If not, see
 
 
 /**
- * Dumps throughput (number of mappings per second) to stdout.
+ * Dumps throughput (number of precise mappings per second) to stdout.
  */
-static bool
+static vote_outcome_t
 sample_throughput(void *ctx, vote_mapping_t *m) {
-  VOTE_UNUSED(m);
   static size_t cnt = 0;
+  time_t curr = 0;
   time_t *prev = (time_t*)ctx;
-  time_t curr = time(NULL);
-  
+
+  if(!vote_mapping_precise(m)) {
+    return VOTE_UNSURE;
+  }
+    
   cnt++;
-  
+  curr = time(NULL);
   if(*prev < curr - 1) {
     *prev = curr;
     fprintf(stdout, "\rthroughput:speed:      %2.2fM/s", cnt / 1000000.0f);
     fflush(stdout);
     cnt = 0;
   }
-  return true;
+  return VOTE_PASS;
 }
 
 
