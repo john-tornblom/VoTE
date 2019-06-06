@@ -39,7 +39,7 @@ def plausibility_of_range(mapping, alpha=0, beta=1):
         return vote.UNSURE
 
 
-e = vote.Ensemble(sys.argv[1]) # load model from disk
+e = vote.Ensemble.from_file(sys.argv[1]) # load model from disk
 assert e.forall(plausibility_of_range)
 
 

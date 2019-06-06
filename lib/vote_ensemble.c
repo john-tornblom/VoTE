@@ -30,11 +30,9 @@ see <http://www.gnu.org/licenses/>.  */
 #include "vote_postproc.h"
 
 
-vote_ensemble_t*
-vote_ensemble_load(const char *filename) {
+static vote_ensemble_t*
+vote_ensemble_load(json_object *root) {
   json_object *obj;
-  json_object *root = json_object_from_file(filename);
-  assert(root);
   
   json_object_object_get_ex(root, "trees", &obj);
   array_list *array = json_object_get_array(obj);
@@ -79,6 +77,24 @@ vote_ensemble_load(const char *filename) {
   json_object_put(root);
   
   return e;
+}
+
+
+vote_ensemble_t*
+vote_ensemble_load_file(const char *filename) {
+  json_object *root = json_object_from_file(filename);
+  assert(root);
+
+  return vote_ensemble_load(root);
+}
+
+
+vote_ensemble_t*
+vote_ensemble_load_string(const char *string) {
+  json_object *root = json_tokener_parse(string);
+  assert(root);
+
+  return vote_ensemble_load(root);
 }
 
 

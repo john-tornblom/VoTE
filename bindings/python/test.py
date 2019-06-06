@@ -93,13 +93,7 @@ class SimpleVoTETestCase(unittest.TestCase):
     ensemble = None
     
     def setUp(self):
-        (_, filename) = tempfile.mkstemp()
-        atexit.register(os.remove, filename)
-        with open(filename, 'w') as fp:
-            obj = json.loads(self.serialized_ensemble)
-            json.dump(obj, fp)
-
-        self.ensemble = vote.Ensemble(filename)
+        self.ensemble = vote.Ensemble.from_string(self.serialized_ensemble)
         
     def t1(self, x):
         '''

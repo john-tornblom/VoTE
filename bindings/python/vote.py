@@ -100,13 +100,23 @@ class Ensemble(object):
     
     ptr = None
 
-    def __init__(self, filename):
-        self.ptr = lib.vote_ensemble_load(filename)
+    def __init__(self, ptr):
+        self.ptr = ptr
         assert self.ptr
         
     def __del__(self):
         if self.ptr:
             lib.vote_ensemble_del(self.ptr)
+
+    @staticmethod
+    def from_file(filename):
+        ptr = lib.vote_ensemble_load_file(filename)
+        return Ensemble(ptr)
+    
+    @staticmethod
+    def from_string(string):
+        ptr = lib.vote_ensemble_load_string(string)
+        return Ensemble(ptr)
 
     @property
     def nb_inputs(self):

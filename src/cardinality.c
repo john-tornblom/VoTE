@@ -47,7 +47,7 @@ int main(int argc, char** argv) {
   }
 
   size_t nb_mappings = 0;
-  vote_ensemble_t* e = vote_ensemble_load(argv[1]);
+  vote_ensemble_t* e = vote_ensemble_load_file(argv[1]);
   assert(e);
 
   printf("cardinality:filename:    %s\n", argv[1]);

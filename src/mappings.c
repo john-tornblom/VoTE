@@ -58,7 +58,7 @@ int main(int argc, char** argv) {
     return 1;
   }
   
-  vote_ensemble_t* e = vote_ensemble_load(argv[1]);
+  vote_ensemble_t* e = vote_ensemble_load_file(argv[1]);
   vote_bound_t domain[e->nb_inputs];
 
   for(size_t i=0; i<e->nb_inputs; i++) {

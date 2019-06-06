@@ -86,7 +86,7 @@ int main(int argc, char** argv) {
     return 1;
   }
 
-  if(!(e = vote_ensemble_load(argv[1]))) {
+  if(!(e = vote_ensemble_load_file(argv[1]))) {
     printf("Unable to load model from %s\n", argv[1]);
     exit(1);
   }
