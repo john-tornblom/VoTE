@@ -1,4 +1,4 @@
-# VoTE (Verifier of Tree Ensembles)
+# VoTE (Verifier of Tree Ensembles) [![Build Status](https://travis-ci.org/john-tornblom/VoTE.svg?branch=master)](https://travis-ci.org/john-tornblom/VoTE) 
 VoTE (Verifier of Tree Ensembles) is a toolsuite for analyzing input/output
 mappings of decision trees and tree ensembles. VoTE consists of two distinct
 type of components, VoTE Core and VoTE Property Checker. VoTE Core takes as
