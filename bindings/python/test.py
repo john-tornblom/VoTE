@@ -77,16 +77,16 @@ class SimpleVoTETestCase(unittest.TestCase):
         "left": [1, 2, -1, -1, 5, -1, -1],
         "right": [4, 3, -1, -1, 6, -1, -1],
         "feature": [0, 0, -1, -1, 0, -1, -1],
-        "threshold": [5, 1, NaN, NaN, 9, NaN, NaN],
-        "value": [[NaN], [NaN], [0], [1], [NaN], [2], [3]]
+        "threshold": [5, 1, -1, -1, 9, -1, -1],
+        "value": [[-1], [-1], [0], [1], [-1], [2], [3]]
       }, {
         "nb_inputs": 1,
         "nb_outputs": 1,
         "left": [1, 2, -1, -1, 5, -1, -1],
         "right": [4, 3, -1, -1, 6, -1, -1],
         "feature": [0, 0, -1, -1, 0, -1, -1],
-        "threshold": [2, 1, NaN, NaN, 6, NaN, NaN],
-        "value": [[NaN], [NaN], [1], [0], [NaN], [5], [2]]
+        "threshold": [2, 1, -1, -1, 6, -1, -1],
+        "value": [[-1], [-1], [1], [0], [-1], [5], [2]]
       }
     ],
     "post_process": "divisor"}'''
@@ -234,9 +234,9 @@ class VoTEUtilityTestCase(SimpleVoTETestCase):
         "left": [1, 2, -1, -1, 5, -1, -1],
         "right": [4, 3, -1, -1, 6, -1, -1],
         "feature": [0, 0, -1, -1, 0, -1, -1],
-        "threshold": [5, 1, NaN, NaN, 9, NaN, NaN],
-        "value": [[NaN,NaN,NaN], [NaN,NaN,NaN], [0,1,2], [1,0,2],
-                 [NaN,NaN,NaN], [2,1,1], [3,0,0]]
+        "threshold": [5, 1, -1, -1, 9, -1, -1],
+        "value": [[-1,-1,-1], [-1,-1,-1], [0,1,2], [1,0,2],
+                 [-1,-1,-1], [2,1,1], [3,0,0]]
       }
     ],
     "post_process": "divisor"}'''
