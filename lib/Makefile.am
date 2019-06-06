@@ -29,5 +29,5 @@ libvote_la_SOURCES = vote_mapping.c \
                      vote_utils.c
 
 libvote_la_LIBADD = @LIBJSON_LIBS@ -lm
-libvote_la_LDFLAGS = -version-info 0:0:0
+libvote_la_LDFLAGS = -version-info 1:0:0
 
