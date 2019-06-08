@@ -20,10 +20,10 @@
 VoTE (Verifier of Tree Ensembles) is a toolsuite for analyzing input/output
 mappings of decision trees and tree ensembles.
 '''
+import json
 
 from _vote import ffi as _ffi
 from _vote import lib as _lib
-
 
 
 __version__ = _ffi.string(_lib.vote_version())
@@ -93,6 +93,45 @@ def _vote_mapping_python_cb(ctx, mapping):
     return callback(mapping)
 
 
+def _sklearn_decision_tree_to_dict(tree):
+    '''
+    Convert a sklearn decision tree into a dictionary.
+    '''
+    import numpy as np
+    
+    def normalize(matrix):
+        for row in matrix:
+            row /= np.sum(row) or 1
+
+        return matrix
+
+    if tree._estimator_type == 'classifier':
+        nb_outputs = tree.n_classes_
+        value = normalize(np.squeeze(tree.tree_.value))
+    else:
+        nb_outputs = tree.n_outputs_
+        value = np.squeeze(tree.tree_.value)
+        if len(value.shape) == 1:
+            value = value.reshape((len(value), 1))
+
+    return dict(nb_inputs=tree.n_features_,
+                nb_outputs=nb_outputs,
+                left=tree.tree_.children_left.tolist(),
+                right=tree.tree_.children_right.tolist(),
+                feature=tree.tree_.feature.tolist(),
+                threshold=tree.tree_.threshold.tolist(),
+                value=value.tolist())
+
+
+def _sklearn_random_forest_to_dict(inst):
+    '''
+    Convert a sklearn random forest into a dictionary.
+    '''
+    return dict(trees=[_sklearn_decision_tree_to_dict(tree)
+                       for tree in inst.estimators_],
+                post_process='divisor')
+
+
 class Ensemble(object):
     '''
     An ensemble is a collection of trees that captures statistical properties 
@@ -132,6 +171,22 @@ class Ensemble(object):
         ptr = _lib.vote_ensemble_load_string(string)
         return Ensemble(ptr)
 
+    @staticmethod
+    def from_sklearn(instance):
+        '''
+        Convert an sklearn model *instance* into a VoTE ensemble.
+        '''
+        conv = {
+            'RandomForestClassifier': _sklearn_random_forest_to_dict,
+            'RandomForestRegressor': _sklearn_random_forest_to_dict,
+        }
+        name = type(instance).__name__
+        if name not in conv:
+            raise NotImplementedError
+        
+        d = conv[name](instance)
+        return Ensemble.from_string(json.dumps(d))
+    
     @property
     def nb_inputs(self):
         '''

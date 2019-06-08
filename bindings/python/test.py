@@ -458,5 +458,48 @@ class VoTEUtilityTestCase(SimpleVoTETestCase):
             m.outputs[dim].lower += 1
 
 
+class TestModelConvert(unittest.TestCase):
+
+    def test_sklearn_rf_classification(self):
+        from sklearn.ensemble import RandomForestClassifier
+        from sklearn.datasets import make_classification
+
+        X, Y = make_classification(random_state=12345)
+        m = RandomForestClassifier(random_state=12345)
+        m.fit(X, Y)
+        Y_pred = m.predict(X)
+        
+        e = vote.Ensemble.from_sklearn(m)
+        for xvec, y_pred in zip(X, Y_pred):
+            label = vote.argmax(e.eval(*xvec))
+            self.assertEqual(label, y_pred)
+
+    def test_sklearn_rf_univariate_regression(self):
+        from sklearn.ensemble import RandomForestRegressor
+        from sklearn.datasets import make_regression
+
+        X, Y = make_regression(random_state=12345, n_targets=1)
+        m = RandomForestRegressor(random_state=12345)
+        m.fit(X, Y)
+        Y_pred = m.predict(X)
+        
+        e = vote.Ensemble.from_sklearn(m)
+        for xvec, y_pred in zip(X, Y_pred):
+            self.assertEqual(e.eval(*xvec), y_pred)
+
+    def test_sklearn_rf_multivariate_regression(self):
+        from sklearn.ensemble import RandomForestRegressor
+        from sklearn.datasets import make_regression
+
+        X, Y = make_regression(random_state=12345, n_targets=3)
+        m = RandomForestRegressor(random_state=12345)
+        m.fit(X, Y)
+        Y_pred = m.predict(X)
+        
+        e = vote.Ensemble.from_sklearn(m)
+        for xvec, y_pred in zip(X, Y_pred):
+            self.assertItemsEqual(e.eval(*xvec), y_pred)
+
+            
 if __name__ == "__main__":
     unittest.main()

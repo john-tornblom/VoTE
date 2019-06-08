@@ -2,8 +2,9 @@ dist: xenial
 language: c
 
 install:
-  - sudo apt-get install autoconf libtool pkg-config build-essential libjson-c-dev python-cffi python-dev
-
+  - sudo apt-get install autoconf libtool pkg-config build-essential libjson-c-dev
+  - sudo apt-get install python-dev python-cffi python-sklearn
+  
 script:
   - "./bootstrap.sh && ./configure && make clean && make"
   - "python bindings/python/setup.py test"
