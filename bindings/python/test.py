@@ -465,7 +465,7 @@ class TestModelConvert(unittest.TestCase):
         from sklearn.datasets import make_classification
 
         X, Y = make_classification(random_state=12345)
-        m = RandomForestClassifier(random_state=12345)
+        m = RandomForestClassifier(n_estimators=10, random_state=12345)
         m.fit(X, Y)
         Y_pred = m.predict(X)
         
@@ -478,8 +478,8 @@ class TestModelConvert(unittest.TestCase):
         from sklearn.ensemble import RandomForestRegressor
         from sklearn.datasets import make_regression
 
-        X, Y = make_regression(random_state=12345, n_targets=1)
-        m = RandomForestRegressor(random_state=12345)
+        X, Y = make_regression(n_targets=1, random_state=12345)
+        m = RandomForestRegressor(n_estimators=10, random_state=12345)
         m.fit(X, Y)
         Y_pred = m.predict(X)
         
@@ -491,8 +491,8 @@ class TestModelConvert(unittest.TestCase):
         from sklearn.ensemble import RandomForestRegressor
         from sklearn.datasets import make_regression
 
-        X, Y = make_regression(random_state=12345, n_targets=3)
-        m = RandomForestRegressor(random_state=12345)
+        X, Y = make_regression(n_targets=3, random_state=12345)
+        m = RandomForestRegressor(n_estimators=10, random_state=12345)
         m.fit(X, Y)
         Y_pred = m.predict(X)
         
