@@ -102,10 +102,17 @@ class Ensemble(object):
     ptr = None
 
     def __init__(self, ptr):
+        '''
+        Initialize a Python object that wraps arround a pointer to a VoTE Core
+        vote_ensemble_t data structure.
+        '''
         self.ptr = ptr
         assert self.ptr
         
     def __del__(self):
+        '''
+        Free the memory pointed to by *self.ptr*.
+        '''
         if self.ptr:
             _lib.vote_ensemble_del(self.ptr)
 
@@ -141,7 +148,7 @@ class Ensemble(object):
 
     def eval(self, *args):
         '''
-        Evaluate this ensemble on concrete values.
+        Evaluate this ensemble on a concrete sample.
         '''
         inputs = _ffi.new('real_t[%d]' % self.nb_inputs, args)
         outputs = _ffi.new('real_t[%d]' % self.nb_outputs)
