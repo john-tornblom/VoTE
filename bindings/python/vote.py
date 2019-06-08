@@ -150,9 +150,9 @@ class Ensemble(object):
 
     def forall(self, callback, domain=None):
         '''
-        Enumerate all conclusive mappings of this ensemble for some input *domain*
+        Enumerate all precise mappings of this ensemble for some input *domain*
         until the *callback* function returns FAIL, or all mappings
-        have been iterated.
+        have been enumerated.
 
         Returns true if all mappings PASS the callback function, or
         false if any of the mappings FAIL the callback function.
