@@ -170,24 +170,24 @@ class Ensemble(object):
         if self.ptr:
             _lib.vote_ensemble_del(self.ptr)
 
-    @staticmethod
-    def from_file(filename):
+    @classmethod
+    def from_file(cls, filename):
         '''
         Load a VoTE ensemble from disk persisted in a JSON-based format.
         '''
         ptr = _lib.vote_ensemble_load_file(filename.encode('utf8'))
-        return Ensemble(ptr)
+        return cls(ptr)
     
-    @staticmethod
-    def from_string(string):
+    @classmethod
+    def from_string(cls, string):
         '''
         Load a VoTE ensemble from a a JSON-based formated *string*.
         '''
         ptr = _lib.vote_ensemble_load_string(string.encode('utf8'))
-        return Ensemble(ptr)
+        return cls(ptr)
 
-    @staticmethod
-    def from_sklearn(instance):
+    @classmethod
+    def from_sklearn(cls, instance):
         '''
         Convert an sklearn model *instance* into a VoTE ensemble.
         '''
@@ -200,7 +200,7 @@ class Ensemble(object):
             raise NotImplementedError
         
         d = conv[name](instance)
-        return Ensemble.from_string(json.dumps(d, cls=_NumPyJSONEncoder))
+        return cls.from_string(json.dumps(d, cls=_NumPyJSONEncoder))
     
     @property
     def nb_inputs(self):
