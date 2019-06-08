@@ -93,7 +93,7 @@ def _vote_mapping_python_cb(ctx, mapping):
     return callback(mapping)
 
 
-def _sklearn_decision_tree_to_dict(tree):
+def _sklearn_dt_to_dict(tree):
     '''
     Convert a sklearn decision tree into a dictionary.
     '''
@@ -123,11 +123,11 @@ def _sklearn_decision_tree_to_dict(tree):
                 value=value)
 
 
-def _sklearn_random_forest_to_dict(inst):
+def _sklearn_rf_to_dict(inst):
     '''
     Convert a sklearn random forest into a dictionary.
     '''
-    return dict(trees=[_sklearn_decision_tree_to_dict(tree)
+    return dict(trees=[_sklearn_dt_to_dict(tree)
                        for tree in inst.estimators_],
                 post_process='divisor')
 
@@ -192,8 +192,8 @@ class Ensemble(object):
         Convert an sklearn model *instance* into a VoTE ensemble.
         '''
         conv = {
-            'RandomForestClassifier': _sklearn_random_forest_to_dict,
-            'RandomForestRegressor': _sklearn_random_forest_to_dict,
+            'RandomForestClassifier': _sklearn_rf_to_dict,
+            'RandomForestRegressor': _sklearn_rf_to_dict,
         }
         name = type(instance).__name__
         if name not in conv:
