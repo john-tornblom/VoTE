@@ -160,7 +160,7 @@ class Ensemble(object):
         '''
         Load a VoTE ensemble from disk persisted in a JSON-based format.
         '''
-        ptr = _lib.vote_ensemble_load_file(filename)
+        ptr = _lib.vote_ensemble_load_file(filename.encode('utf8'))
         return Ensemble(ptr)
     
     @staticmethod
@@ -168,7 +168,7 @@ class Ensemble(object):
         '''
         Load a VoTE ensemble from a a JSON-based formated *string*.
         '''
-        ptr = _lib.vote_ensemble_load_string(string)
+        ptr = _lib.vote_ensemble_load_string(string.encode('utf8'))
         return Ensemble(ptr)
 
     @staticmethod
