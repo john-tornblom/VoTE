@@ -116,11 +116,11 @@ def _sklearn_decision_tree_to_dict(tree):
 
     return dict(nb_inputs=tree.n_features_,
                 nb_outputs=nb_outputs,
-                left=tree.tree_.children_left.tolist(),
-                right=tree.tree_.children_right.tolist(),
-                feature=tree.tree_.feature.tolist(),
-                threshold=tree.tree_.threshold.tolist(),
-                value=value.tolist())
+                left=tree.tree_.children_left,
+                right=tree.tree_.children_right,
+                feature=tree.tree_.feature,
+                threshold=tree.tree_.threshold,
+                value=value)
 
 
 def _sklearn_random_forest_to_dict(inst):
@@ -130,6 +130,21 @@ def _sklearn_random_forest_to_dict(inst):
     return dict(trees=[_sklearn_decision_tree_to_dict(tree)
                        for tree in inst.estimators_],
                 post_process='divisor')
+
+
+class _NumPyJSONEncoder(json.JSONEncoder):
+    def default(self, obj):
+        import numpy as np
+        ty = type(obj)
+        
+        if issubclass(ty, np.ndarray):
+            return obj.tolist()
+        elif issubclass(ty, np.float):
+            return float(obj)
+        elif issubclass(ty, np.integer):
+            return int(obj)
+        else:
+            return json.JSONEncoder.default(self, obj)
 
 
 class Ensemble(object):
@@ -185,7 +200,7 @@ class Ensemble(object):
             raise NotImplementedError
         
         d = conv[name](instance)
-        return Ensemble.from_string(json.dumps(d))
+        return Ensemble.from_string(json.dumps(d, cls=_NumPyJSONEncoder))
     
     @property
     def nb_inputs(self):

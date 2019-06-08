@@ -498,7 +498,8 @@ class TestModelConvert(unittest.TestCase):
         
         e = vote.Ensemble.from_sklearn(m)
         for xvec, y_pred in zip(X, Y_pred):
-            self.assertItemsEqual(e.eval(*xvec), y_pred)
+            for y1, y2 in zip(e.eval(*xvec), y_pred):
+                self.assertEqual(y1, y2)
 
             
 if __name__ == "__main__":
