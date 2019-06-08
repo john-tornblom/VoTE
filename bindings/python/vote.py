@@ -110,11 +110,17 @@ class Ensemble(object):
 
     @staticmethod
     def from_file(filename):
+        '''
+        Load a VoTE ensemble from disk persisted in a JSON-based format.
+        '''
         ptr = lib.vote_ensemble_load_file(filename)
         return Ensemble(ptr)
     
     @staticmethod
     def from_string(string):
+        '''
+        Load a VoTE ensemble from a a JSON-based formated *string*.
+        '''
         ptr = lib.vote_ensemble_load_string(string)
         return Ensemble(ptr)
 
