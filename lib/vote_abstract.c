@@ -81,8 +81,8 @@ vote_abstract_join_trees(vote_tree_t *const*trees, size_t nb_trees,
   
   for(size_t i=0; i<nb_trees; i++) {
     for(size_t dim=0; dim<m->nb_outputs; dim++) {
-      tree_outputs[dim].lower = INFINITY;
-      tree_outputs[dim].upper = -INFINITY;
+      tree_outputs[dim].lower = VOTE_INFINITY;
+      tree_outputs[dim].upper = -VOTE_INFINITY;
     }
     
     vote_abstract_join_tree(trees[i], root_id,

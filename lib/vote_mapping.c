@@ -43,8 +43,8 @@ vote_mapping_new(size_t input_dim, size_t output_dim) {
   m->nb_outputs = output_dim;
     
   for(size_t i=0; i<m->nb_inputs; i++) {
-    m->inputs[i].lower = -INFINITY;
-    m->inputs[i].upper = INFINITY;
+    m->inputs[i].lower = -VOTE_INFINITY;
+    m->inputs[i].upper = VOTE_INFINITY;
   }
 
   return m;

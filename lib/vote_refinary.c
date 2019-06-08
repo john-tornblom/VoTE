@@ -71,7 +71,7 @@ vote_refinery_decend_left(const vote_refinery_t *r, size_t node_id,
   // refine right split: (threshold, upper]
   if(m->inputs[dim].upper > threshold) {
     if(m->inputs[dim].lower < threshold) {
-      m->inputs[dim].lower = vote_nextafter(threshold, INFINITY);
+      m->inputs[dim].lower = vote_nextafter(threshold, VOTE_INFINITY);
     }
     return vote_refinery_decend(r, right_id, m);
   }
@@ -105,7 +105,7 @@ vote_refinery_decend_right(const vote_refinery_t *r, size_t node_id,
     memcpy(msplit.outputs, m->outputs, m->nb_outputs * sizeof(vote_bound_t));
   
     if(msplit.inputs[dim].lower < threshold) {
-      msplit.inputs[dim].lower = vote_nextafter(threshold, INFINITY);
+      msplit.inputs[dim].lower = vote_nextafter(threshold, VOTE_INFINITY);
     }
     if(!vote_refinery_decend(r, right_id, &msplit)) {
       return false;

@@ -22,11 +22,21 @@ see <http://www.gnu.org/licenses/>.  */
 
 #include <stddef.h>
 #include <stdbool.h>
+#include <math.h>
 
 
 #define VOTE_UNUSED(x) (void)(x)
 #define USE_DOUBLE 1
 typedef double real_t;
+
+
+#if USE_DOUBLE
+#define VOTE_INFINITY (real_t)INFINITY
+#define VOTE_NAN      (real_t)NAN
+#else
+#define VOTE_INFINITY INFINITY
+#define VOTE_NAN      NAN
+#endif
 
 
 /**

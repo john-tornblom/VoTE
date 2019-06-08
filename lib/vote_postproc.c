@@ -50,7 +50,7 @@ static void
 vote_mapping_softmax(vote_mapping_t *m) {
   vote_bound_t sum = {0, 0};
   vote_bound_t off = {0, 0};
-  real_t max = -INFINITY;
+  real_t max = -VOTE_INFINITY;
 
   // This is used for numerical stabillity, see
   // http://www.deeplearningbook.org/contents/numerical.html

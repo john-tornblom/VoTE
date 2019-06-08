@@ -193,7 +193,7 @@ vote_ensemble_eval(const vote_ensemble_t *e, const real_t *inputs, real_t *outpu
   }
   
   for(size_t i=0; i<e->nb_outputs; i++) {
-    outputs[i] = NAN;
+    outputs[i] = VOTE_NAN;
   }
   
   vote_ensemble_forall(e, input_region, vote_ensemble_copy_scalar_outputs, outputs);

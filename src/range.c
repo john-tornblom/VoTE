@@ -107,8 +107,8 @@ int main(int argc, char** argv) {
   printf("range:requirement:     ");
   vote_bound_t domain[e->nb_inputs];
   for(size_t i=0; i<e->nb_inputs; i++) {
-    domain[i].lower = -INFINITY;
-    domain[i].upper = INFINITY;
+    domain[i].lower = -VOTE_INFINITY;
+    domain[i].upper = VOTE_INFINITY;
 
     if(i) {
       printf("\n                       ");
