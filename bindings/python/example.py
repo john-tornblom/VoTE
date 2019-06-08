@@ -16,22 +16,25 @@
 # along with this program; see the file COPYING. If not see
 # <http://www.gnu.org/licenses/>.
 '''
-Ensure that the plausibility of range property is satisfied, i.e. that
- output scalars are within a stated boundary.
+Ensure that the probabilities predicted by a random forest classifier
+trained to classify digits are always within the range [0, 1].
 '''
 
 import sys
 import vote
 
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.datasets import load_digits
 
-def plausibility_of_range(mapping, alpha=0, beta=1):
+
+def is_valid_probability(mapping):
     minval = min([mapping.outputs[dim].lower
                   for dim in range(mapping.nb_outputs)])
                    
     maxval = max([mapping.outputs[dim].upper
                   for dim in range(mapping.nb_outputs)])
 
-    if minval >= alpha and maxval <= beta:
+    if minval >= 0 and maxval <= 1:
         return vote.PASS
     elif vote.mapping_precise(mapping):
         return vote.FAIL
@@ -39,7 +42,16 @@ def plausibility_of_range(mapping, alpha=0, beta=1):
         return vote.UNSURE
 
 
-e = vote.Ensemble.from_file(sys.argv[1]) # load model from disk
-assert e.forall(plausibility_of_range)
+print('Training classifier')
+digits = load_digits()
+m = RandomForestClassifier(n_estimators=10)
+m.fit(digits.data, digits.target)
 
+print('Verifying classifier')
+e = vote.Ensemble.from_sklearn(m)
+if e.absref(is_valid_probability):
+    print('PASS')
+else:
+    print('FAIL')
+    sys.exit(1)
 
