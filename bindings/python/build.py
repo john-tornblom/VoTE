@@ -38,7 +38,7 @@ vote_h = ''.join([line for line in vote_h.splitlines()
                   if not line.startswith('#')])
 
 ffibuilder.cdef(vote_h + '''
-extern "Python" vote_outcome_t vote_mapping_python_cb(void *, vote_mapping_t*);
+extern "Python" vote_outcome_t _vote_mapping_python_cb(void *, vote_mapping_t*);
 ''')
 
 if __name__ == "__main__":

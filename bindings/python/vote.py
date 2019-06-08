@@ -84,7 +84,7 @@ def mapping_check_argmin(mapping, expected):
 
 
 @ffi.def_extern()
-def vote_mapping_python_cb(ctx, mapping):
+def _vote_mapping_python_cb(ctx, mapping):
     '''
     Callback hook from libvote forall iterations.
     '''
@@ -165,7 +165,7 @@ class Ensemble(object):
             bounds[ind].upper = bound[1]
             
         ctx = ffi.new_handle(callback)
-        cb = lib.vote_mapping_python_cb
+        cb = lib._vote_mapping_python_cb
         return lib.vote_ensemble_forall(self.ptr, bounds, cb, ctx)
 
     def absref(self, callback, domain=None):
@@ -190,7 +190,7 @@ class Ensemble(object):
             bounds[ind].upper = bound[1]
             
         ctx = ffi.new_handle(callback)
-        cb = lib.vote_mapping_python_cb
+        cb = lib._vote_mapping_python_cb
         return lib.vote_ensemble_absref(self.ptr, bounds, cb, ctx)
 
     def approximate(self, domain=None):
