@@ -21,11 +21,12 @@ VoTE (Verifier of Tree Ensembles) is a toolsuite for analyzing input/output
 mappings of decision trees and tree ensembles.
 '''
 
-from _vote import ffi, lib
+from _vote import ffi as _ffi
+from _vote import lib as _lib
 
 
-__version__ = ffi.string(lib.vote_version())
 
+__version__ = _ffi.string(_lib.vote_version())
 
 UNSURE = -1
 FAIL = 0
@@ -37,7 +38,7 @@ def argmax(iterable):
     Returns the index of the largest value in an *iterable* of numbers
     '''
     fvec = [float(el) for el in iterable]
-    return lib.vote_argmax(fvec, len(fvec))
+    return _lib.vote_argmax(fvec, len(fvec))
 
 
 def argmin(iterable):
@@ -45,50 +46,50 @@ def argmin(iterable):
     Returns the index of the smallest value in an *iterable* of numbers
     '''
     fvec = [float(el) for el in iterable]
-    return lib.vote_argmin(fvec, len(fvec))
+    return _lib.vote_argmin(fvec, len(fvec))
 
 
 def mapping_precise(mapping):
     '''
     Check if a *mapping* is precise, i.e. the output is a single point.
     '''
-    return lib.vote_mapping_precise(mapping)
+    return _lib.vote_mapping_precise(mapping)
 
 
 def mapping_argmax(mapping):
     '''
     Returns the index of the largest value in a *mapping*
     '''
-    return lib.vote_mapping_argmax(mapping)
+    return _lib.vote_mapping_argmax(mapping)
 
 
 def mapping_check_argmax(mapping, expected):
     '''
     Check if the argmax of a *mapping* is as *expected*.
     '''
-    return lib.vote_mapping_check_argmax(mapping, expected)
+    return _lib.vote_mapping_check_argmax(mapping, expected)
 
 
 def mapping_argmin(mapping):
     '''
     Returns the index of the smallest value in a *mapping*
     '''
-    return lib.vote_mapping_argmin(mapping)
+    return _lib.vote_mapping_argmin(mapping)
 
 
 def mapping_check_argmin(mapping, expected):
     '''
     Check if the argmin of a *mapping* is as *expected*.
     '''
-    return lib.vote_mapping_check_argmin(mapping, expected)
+    return _lib.vote_mapping_check_argmin(mapping, expected)
 
 
-@ffi.def_extern()
+@_ffi.def_extern()
 def _vote_mapping_python_cb(ctx, mapping):
     '''
-    Callback hook from libvote forall iterations.
+    Callback hook from VoTE Core forall/absref iterations.
     '''
-    callback = ffi.from_handle(ctx)
+    callback = _ffi.from_handle(ctx)
     return callback(mapping)
 
 
@@ -106,14 +107,14 @@ class Ensemble(object):
         
     def __del__(self):
         if self.ptr:
-            lib.vote_ensemble_del(self.ptr)
+            _lib.vote_ensemble_del(self.ptr)
 
     @staticmethod
     def from_file(filename):
         '''
         Load a VoTE ensemble from disk persisted in a JSON-based format.
         '''
-        ptr = lib.vote_ensemble_load_file(filename)
+        ptr = _lib.vote_ensemble_load_file(filename)
         return Ensemble(ptr)
     
     @staticmethod
@@ -121,7 +122,7 @@ class Ensemble(object):
         '''
         Load a VoTE ensemble from a a JSON-based formated *string*.
         '''
-        ptr = lib.vote_ensemble_load_string(string)
+        ptr = _lib.vote_ensemble_load_string(string)
         return Ensemble(ptr)
 
     @property
@@ -142,10 +143,10 @@ class Ensemble(object):
         '''
         Evaluate this ensemble on concrete values.
         '''
-        inputs = ffi.new('real_t[%d]' % self.nb_inputs, args)
-        outputs = ffi.new('real_t[%d]' % self.nb_outputs)
+        inputs = _ffi.new('real_t[%d]' % self.nb_inputs, args)
+        outputs = _ffi.new('real_t[%d]' % self.nb_outputs)
 
-        lib.vote_ensemble_eval(self.ptr, inputs, outputs)
+        _lib.vote_ensemble_eval(self.ptr, inputs, outputs)
         return list(outputs)
 
     def forall(self, callback, domain=None):
@@ -157,9 +158,9 @@ class Ensemble(object):
         Returns true if all mappings PASS the callback function, or
         false if any of the mappings FAIL the callback function.
         '''
-        ctx = ffi.NULL
-        bounds = ffi.new('vote_bound_t[%d]' % self.nb_inputs)
-        cb = ffi.callback('vote_mapping_cb_t')
+        ctx = _ffi.NULL
+        bounds = _ffi.new('vote_bound_t[%d]' % self.nb_inputs)
+        cb = _ffi.callback('vote_mapping_cb_t')
         
         for ind in range(self.nb_inputs):
             bounds[ind].lower = -float('inf')
@@ -170,9 +171,9 @@ class Ensemble(object):
             bounds[ind].lower = bound[0]
             bounds[ind].upper = bound[1]
             
-        ctx = ffi.new_handle(callback)
-        cb = lib._vote_mapping_python_cb
-        return lib.vote_ensemble_forall(self.ptr, bounds, cb, ctx)
+        ctx = _ffi.new_handle(callback)
+        cb = _lib._vote_mapping_python_cb
+        return _lib.vote_ensemble_forall(self.ptr, bounds, cb, ctx)
 
     def absref(self, callback, domain=None):
         '''
@@ -182,9 +183,9 @@ class Ensemble(object):
         Returns true if all conclusive mappings PASS the callback function, or
         false if any of the conclusive mappings FAIL the callback function.
         '''
-        ctx = ffi.NULL
-        bounds = ffi.new('vote_bound_t[%d]' % self.nb_inputs)
-        cb = ffi.callback('vote_mapping_cb_t')
+        ctx = _ffi.NULL
+        bounds = _ffi.new('vote_bound_t[%d]' % self.nb_inputs)
+        cb = _ffi.callback('vote_mapping_cb_t')
         
         for ind in range(self.nb_inputs):
             bounds[ind].lower = -float('inf')
@@ -195,15 +196,15 @@ class Ensemble(object):
             bounds[ind].lower = bound[0]
             bounds[ind].upper = bound[1]
             
-        ctx = ffi.new_handle(callback)
-        cb = lib._vote_mapping_python_cb
-        return lib.vote_ensemble_absref(self.ptr, bounds, cb, ctx)
+        ctx = _ffi.new_handle(callback)
+        cb = _lib._vote_mapping_python_cb
+        return _lib.vote_ensemble_absref(self.ptr, bounds, cb, ctx)
 
     def approximate(self, domain=None):
         '''
         Approximate a pessimistic and sound mapping for a given input *domain*.
         '''
-        bounds = ffi.new('vote_bound_t[%d]' % self.nb_inputs)
+        bounds = _ffi.new('vote_bound_t[%d]' % self.nb_inputs)
         
         for ind in range(self.nb_inputs):
             bounds[ind].lower = -float('inf')
@@ -214,5 +215,5 @@ class Ensemble(object):
             bounds[ind].lower = bound[0]
             bounds[ind].upper = bound[1]
             
-        return lib.vote_ensemble_approximate(self.ptr, bounds)
+        return _lib.vote_ensemble_approximate(self.ptr, bounds)
 
