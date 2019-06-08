@@ -1,10 +1,29 @@
 *~
+.libs
+Makefile
+_vote.c
+config.log
+config.status
+libtool
+
+# Binaries
+src/vote_accuracy
+src/vote_cardinality
+src/vote_iospace
+src/vote_mappings
+src/vote_range
+src/vote_robustness
+src/vote_throughput
+examples/vote_mnist_window_robustness
+
 # Python byte-code
 __pycache__/
 *.py[cod]
 
 # Prerequisites
 *.d
+*.Po
+*.Plo
 
 # Object files
 *.o
