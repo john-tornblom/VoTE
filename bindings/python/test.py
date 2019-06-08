@@ -19,7 +19,6 @@
 Simple Unit tests for VoTE.
 '''
 
-import atexit
 import functools
 import json
 import os
