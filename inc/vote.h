@@ -25,8 +25,8 @@ see <http://www.gnu.org/licenses/>.  */
 
 
 #define VOTE_UNUSED(x) (void)(x)
-#define USE_DOUBLE 0
-typedef float real_t;
+#define USE_DOUBLE 1
+typedef double real_t;
 
 
 /**
