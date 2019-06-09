@@ -57,6 +57,6 @@ to discuss the solution properly before you commit time and effort.
 [VoTE Core](lib) is licensed under the LGPLv3+, and [programs](src) linking to
 VoTE Core are licensed under the GPLv3+. see COPYING and COPYING.LESSER for more
 information. Files in the [ext folder](ext) are copyrighted by external entities.
-In particular, VoTE Core used [parson](http://kgabis.github.io/parson) to parse
+In particular, VoTE Core use [parson](http://kgabis.github.io/parson) to parse
 JSON-persisted models. Parson is licened under the
 [MIT license](https://opensource.org/licenses/mit-license.php).
