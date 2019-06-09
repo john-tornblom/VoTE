@@ -12,12 +12,10 @@ For more information, see
 [our paper](http://arxiv.org/abs/1905.04194).
 
 ## Building
-Autotools is used to generate makefiles, and VoTE Core depends on libjson-c to
-parse decision trees and tree ensembles. On Ubuntu-flavored operating systems,
-you can invoke the following commands to install dependencies, generate
-makefiles, and compile the source code.
+On Ubuntu-flavored operating systems, you can invoke the following commands to
+install dependencies, generate makefiles, and compile the source code.
 ```console
-john@localhost:VoTE$ sudo apt-get install autoconf libtool pkg-config build-essential libjson-c-dev python-cffi python-dev
+john@localhost:VoTE$ sudo apt-get install autoconf libtool pkg-config build-essential python-cffi python-dev
 john@localhost:VoTE$ ./bootstrap.sh
 john@localhost:VoTE$ ./configure
 john@localhost:VoTE$ make
