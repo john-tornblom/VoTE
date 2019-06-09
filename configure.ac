@@ -25,11 +25,6 @@ AC_PROG_CXX
 AC_PROG_INSTALL
 AC_PROG_RANLIB
 
-# Checks for libraries.
-PKG_CHECK_MODULES([LIBJSON], [json-c])
-AC_SUBST([LIBJSON_CFLAGS])
-AC_SUBST([LIBJSON_LIBS])
-
 # Checks for header files.
 AC_CHECK_HEADERS([stddef.h math.h])
 AC_HEADER_ASSERT
@@ -51,5 +46,5 @@ AM_PATH_PYTHON
 
 LT_INIT
 
-AC_OUTPUT(Makefile lib/Makefile inc/Makefile src/Makefile examples/Makefile
-          bindings/python/Makefile)
+AC_OUTPUT(Makefile ext/Makefile lib/Makefile inc/Makefile src/Makefile
+          examples/Makefile bindings/python/Makefile)

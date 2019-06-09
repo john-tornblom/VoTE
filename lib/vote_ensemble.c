@@ -19,7 +19,8 @@ see <http://www.gnu.org/licenses/>.  */
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
-#include <json.h>
+
+#include "parson.h"
 
 #include "vote.h"
 #include "vote_math.h"
@@ -31,23 +32,25 @@ see <http://www.gnu.org/licenses/>.  */
 
 
 static vote_ensemble_t*
-vote_ensemble_load(json_object *root) {
-  json_object *obj;
-  
-  json_object_object_get_ex(root, "trees", &obj);
-  array_list *array = json_object_get_array(obj);
+vote_ensemble_load(struct json_value_t *root) {
+  struct json_object_t *obj;
+  struct json_array_t *array;
+
+  assert(json_value_get_type(root) == JSONObject);
+  obj = json_value_get_object(root);
+  array = json_object_get_array(obj, "trees");
   assert(array);
   
   vote_ensemble_t *e = calloc(1, sizeof(vote_ensemble_t));
   assert(e);
   
-  e->nb_trees = array_list_length(array);
+  e->nb_trees = json_array_get_count(array);
   e->trees = calloc(e->nb_trees, sizeof(vote_tree_t*));
   assert(e->trees);
   
   for(size_t i=0; i<e->nb_trees; i++) {
-    json_object *el = array_list_get_idx(array, i);
-    e->trees[i] = vote_tree_parse(el);
+    struct json_value_t *val = json_array_get_value(array, i);
+    e->trees[i] = vote_tree_parse(val);
 
     if(i == 0) {
       e->nb_inputs = e->trees[i]->nb_inputs;
@@ -59,8 +62,8 @@ vote_ensemble_load(json_object *root) {
     e->nb_nodes += e->trees[i]->nb_nodes;
   }
 
-  json_object_object_get_ex(root, "post_process", &obj);
-  const char *post_process = json_object_get_string(obj);
+  const char *post_process = json_object_get_string(obj, "post_process");
+  assert(post_process);
   
   if(!strcmp(post_process, "none")) {
     e->post_process = VOTE_POST_PROCESS_NONE;
@@ -72,29 +75,31 @@ vote_ensemble_load(json_object *root) {
     assert(false && "unknown post-processing algorithm");
   }
   
-  //This actually deletes the json_object. Possibly the worst
-  //name choices in the history of computing.
-  json_object_put(root);
-  
   return e;
 }
 
 
 vote_ensemble_t*
 vote_ensemble_load_file(const char *filename) {
-  json_object *root = json_object_from_file(filename);
+  struct json_value_t *root = json_parse_file(filename);
   assert(root);
 
-  return vote_ensemble_load(root);
+  vote_ensemble_t* e = vote_ensemble_load(root);
+  json_value_free(root);
+  
+  return e;
 }
 
 
 vote_ensemble_t*
 vote_ensemble_load_string(const char *string) {
-  json_object *root = json_tokener_parse(string);
+  struct json_value_t *root = json_parse_string(string);
   assert(root);
 
-  return vote_ensemble_load(root);
+  vote_ensemble_t* e = vote_ensemble_load(root);
+  json_value_free(root);
+  
+  return e;
 }
 
 

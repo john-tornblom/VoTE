@@ -32,7 +32,7 @@ with open(incdir + '/vote.h') as f:
     vote_h = f.read()
     ffibuilder.set_source('_vote', vote_h,
                           extra_objects=[binary],
-                          libraries=['m', 'json-c'])
+                          libraries=['m'])
 
 vote_h = ''.join([line for line in vote_h.splitlines()
                   if not line.startswith('#')])

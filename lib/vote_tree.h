@@ -41,13 +41,13 @@ struct vote_tree {
 };
 
 
-struct json_object;
+struct json_value_t;
 
 
 /**
  * Parse a JSON dictonary into a tree.
  **/
-vote_tree_t *vote_tree_parse(struct json_object *root);
+vote_tree_t *vote_tree_parse(struct json_value_t *root);
 
 
 /**

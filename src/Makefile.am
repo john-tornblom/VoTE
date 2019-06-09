@@ -23,29 +23,29 @@ bin_PROGRAMS = vote_accuracy \
                vote_range
 
 vote_accuracy_SOURCES = accuracy.c
-vote_accuracy_CFLAGS = -std=c99 -I../inc @LIBJSON_CFLAGS@
-vote_accuracy_LDADD = ../lib/libvote.la @LIBJSON_LIBS@ -lm
+vote_accuracy_CFLAGS = -std=c99 -I../inc
+vote_accuracy_LDADD = ../lib/libvote.la -lm
 
 vote_cardinality_SOURCES = cardinality.c
-vote_cardinality_CFLAGS = -std=c99 -I../inc @LIBJSON_CFLAGS@
-vote_cardinality_LDADD = ../lib/libvote.la @LIBJSON_LIBS@ -lm
+vote_cardinality_CFLAGS = -std=c99 -I../inc
+vote_cardinality_LDADD = ../lib/libvote.la -lm
 
 vote_mappings_SOURCES = mappings.c
-vote_mappings_CFLAGS = -std=c99 -I../inc @LIBJSON_CFLAGS@
-vote_mappings_LDADD = ../lib/libvote.la @LIBJSON_LIBS@ -lm
+vote_mappings_CFLAGS = -std=c99 -I../inc
+vote_mappings_LDADD = ../lib/libvote.la -lm
 
 vote_throughput_SOURCES = throughput.c
-vote_throughput_CFLAGS = -std=c99 -I../inc @LIBJSON_CFLAGS@
-vote_throughput_LDADD = ../lib/libvote.la @LIBJSON_LIBS@ -lm
+vote_throughput_CFLAGS = -std=c99 -I../inc
+vote_throughput_LDADD = ../lib/libvote.la -lm
 
 vote_iospace_SOURCES = iospace.c
-vote_iospace_CFLAGS = -std=c99 -I../inc @LIBJSON_CFLAGS@
-vote_iospace_LDADD = ../lib/libvote.la @LIBJSON_LIBS@ -lm
+vote_iospace_CFLAGS = -std=c99 -I../inc
+vote_iospace_LDADD = ../lib/libvote.la -lm
 
 vote_robustness_SOURCES = robustness.c
-vote_robustness_CFLAGS = -std=c99 -I../inc @LIBJSON_CFLAGS@
-vote_robustness_LDADD = ../lib/libvote.la @LIBJSON_LIBS@ -lm
+vote_robustness_CFLAGS = -std=c99 -I../inc
+vote_robustness_LDADD = ../lib/libvote.la -lm
 
 vote_range_SOURCES = range.c
-vote_range_CFLAGS = -std=c99 -I../inc @LIBJSON_CFLAGS@
-vote_range_LDADD = ../lib/libvote.la @LIBJSON_LIBS@ -lm
+vote_range_CFLAGS = -std=c99 -I../inc
+vote_range_LDADD = ../lib/libvote.la -lm

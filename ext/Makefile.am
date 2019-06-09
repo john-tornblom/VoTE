@@ -1,4 +1,4 @@
-#   Copyright (C) 2018 John Törnblom
+#   Copyright (C) 2019 John Törnblom
 #
 # This file is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -14,4 +14,8 @@
 # along with this program; see the file COPYING. If not see
 # <http://www.gnu.org/licenses/>.
 
-SUBDIRS = ext lib inc src examples bindings/python
+noinst_LTLIBRARIES = libparson.la
+libparson_la_CFLAGS = -std=c89 -Wextra -Werror -pedantic -fPIC 
+libparson_la_SOURCES = parson.c
+libparson_la_LDFLAGS = -static
+

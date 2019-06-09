@@ -17,5 +17,5 @@
 noinst_PROGRAMS = vote_mnist_window_robustness
 
 vote_mnist_window_robustness_SOURCES = mnist.c
-vote_mnist_window_robustness_CFLAGS = -std=c99 -I../inc @LIBJSON_CFLAGS@
-vote_mnist_window_robustness_LDADD = ../lib/libvote.la @LIBJSON_LIBS@ -lm
+vote_mnist_window_robustness_CFLAGS = -std=c99 -I../inc
+vote_mnist_window_robustness_LDADD = ../lib/libvote.la -lm

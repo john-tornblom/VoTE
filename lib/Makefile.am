@@ -16,9 +16,9 @@
 
 lib_LTLIBRARIES = libvote.la
 
-libvote_la_CFLAGS = -I../inc -std=c99 -D_DEFAULT_SOURCE -Wextra -Werror \
-                    -pedantic -Wdouble-promotion -Wfloat-conversion -fPIC \
-                    @LIBJSON_CFLAGS@
+libvote_la_CFLAGS = -I../inc -I../ext -std=c99 -D_DEFAULT_SOURCE -Wextra \
+                    -Werror -pedantic -Wdouble-promotion -Wfloat-conversion \
+                    -fPIC
 libvote_la_SOURCES = vote_mapping.c \
                      vote_tree.c \
                      vote_ensemble.c \
@@ -28,6 +28,6 @@ libvote_la_SOURCES = vote_mapping.c \
                      vote_postproc.c \
                      vote_utils.c
 
-libvote_la_LIBADD = @LIBJSON_LIBS@ -lm
+libvote_la_LIBADD = ../ext/libparson.la -lm
 libvote_la_LDFLAGS = -version-info 1:0:0
 
