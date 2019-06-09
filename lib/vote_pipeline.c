@@ -47,6 +47,10 @@ vote_pipeline_new(void *ctx, vote_mapping_cb_t *on_input,
 
 void
 vote_pipeline_del(vote_pipeline_t *p) {
+  if(p->next) {
+    vote_pipeline_del(p->next);
+  }
+  
   if(p->on_delete) {
     p->on_delete(p->ctx);
   }
