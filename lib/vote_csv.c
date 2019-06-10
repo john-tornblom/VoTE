@@ -400,7 +400,8 @@ csv_parser_on_token(void *ctx, csv_token_t token, const char* value) {
 static bool
 vote_csv_count_numbers(void *ctx, csv_token_t token, const char* value) {
   size_t *cnt = (size_t*)ctx;
-
+  VOTE_UNUSED(value);
+  
   if(token == TOK_NUMBER) {
     (*cnt)++;
   }
