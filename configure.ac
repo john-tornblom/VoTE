@@ -21,7 +21,6 @@ AC_CONFIG_SRCDIR([configure.ac])
 
 # Checks for programs.
 AC_PROG_CC
-AC_PROG_CXX
 AC_PROG_INSTALL
 AC_PROG_RANLIB
 
