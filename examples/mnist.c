@@ -151,7 +151,7 @@ int main(int argc, char** argv) {
     exit(1);
   }
   
-  if(!vote_load_csv(argv[2], &data, &nb_rows, &nb_cols)) {
+  if(!vote_csv_load(argv[2], &data, &nb_rows, &nb_cols)) {
     printf("Unable to load data from %s\n", argv[2]);
     exit(1);
   }
