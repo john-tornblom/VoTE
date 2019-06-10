@@ -15,3 +15,4 @@
 # <http://www.gnu.org/licenses/>.
 
 SUBDIRS = ext lib inc src examples bindings/python
+ACLOCAL_AMFLAGS = -I m4

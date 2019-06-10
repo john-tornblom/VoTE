@@ -17,10 +17,11 @@
 
 EXTRA_DIST = setup.py vote.py build.py test.py
 
+if HAVE_PYMOD_CFFI
 all-local:
 	$(PYTHON) setup.py build --build-lib $(builddir)
 
 clean-local:
 	$(PYTHON) setup.py clean --all
 	rm -f $(builddir)/build/_vote.c
-
+endif

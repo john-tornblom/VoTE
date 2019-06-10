@@ -14,8 +14,8 @@ For more information, see [our paper][paper].
 On Ubuntu-flavored operating systems, you can invoke the following commands to
 install dependencies, generate makefiles, and compile the source code.
 ```console
-john@localhost:VoTE$ sudo apt-get install autoconf libtool pkg-config \
-                                          build-essential python-cffi python-dev
+john@localhost:VoTE$ sudo apt-get install autoconf libtool build-essential
+john@localhost:VoTE$ sudo apt-get install python-cffi # optional python bindings
 john@localhost:VoTE$ ./bootstrap.sh
 john@localhost:VoTE$ ./configure
 john@localhost:VoTE$ make

@@ -18,6 +18,7 @@ AC_PREREQ([2.69])
 AC_INIT(libvote, 0.2.0, john.tornblom@liu.se)
 AC_COPYRIGHT([GNU Lesser General Public License version 3 or later])
 AC_CONFIG_SRCDIR([configure.ac])
+AC_CONFIG_MACRO_DIRS([m4])
 
 # Checks for programs.
 AC_PROG_CC
@@ -41,7 +42,11 @@ AC_FUNC_MEMCMP
 AM_INIT_AUTOMAKE([foreign])
 AM_PROG_CC_STDC
 AM_PROG_LIBTOOL
-AM_PATH_PYTHON
+
+# Checks for optional python bindings deps
+AM_PATH_PYTHON([2.7],, [:])
+AX_PYTHON_MODULE([cffi])
+AM_CONDITIONAL([HAVE_PYMOD_CFFI], [test "$HAVE_PYMOD_CFFI" = yes])
 
 LT_INIT
 
