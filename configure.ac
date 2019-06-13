@@ -15,7 +15,7 @@
 # <http://www.gnu.org/licenses/>.
 
 AC_PREREQ([2.69])
-AC_INIT(libvote, 0.2.0, john.tornblom@liu.se)
+AC_INIT(libvote, 0.2.1, john.tornblom@liu.se)
 AC_COPYRIGHT([GNU Lesser General Public License version 3 or later])
 AC_CONFIG_SRCDIR([configure.ac])
 AC_CONFIG_MACRO_DIRS([m4])

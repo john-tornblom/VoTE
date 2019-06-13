@@ -46,7 +46,7 @@ class TestCommand(Command):
 
 setup(
     name='vote',
-    version='0.2.0',
+    version='0.2.1',
     description='Toolsuite for analyzing input/output mappings of decision trees and tree ensembles',
     author='John Törnblom',
     author_email='john.tornblom@liu.se',
