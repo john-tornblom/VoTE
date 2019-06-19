@@ -71,6 +71,8 @@ vote_ensemble_load(struct json_value_t *root) {
     e->post_process = VOTE_POST_PROCESS_DIVISOR;
   } else if(!strcmp(post_process, "softmax")) {
     e->post_process = VOTE_POST_PROCESS_SOFTMAX;
+  } else if(!strcmp(post_process, "sigmoid")) {
+    e->post_process = VOTE_POST_PROCESS_SIGMOID;
   } else {
     assert(false && "unknown post-processing algorithm");
   }

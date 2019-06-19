@@ -73,7 +73,8 @@ typedef struct vote_tree vote_tree_t;
 typedef enum vote_post_process {
   VOTE_POST_PROCESS_NONE,
   VOTE_POST_PROCESS_DIVISOR,
-  VOTE_POST_PROCESS_SOFTMAX
+  VOTE_POST_PROCESS_SOFTMAX,
+  VOTE_POST_PROCESS_SIGMOID
 } vote_post_process_t;
 
 

@@ -83,6 +83,21 @@ vote_mapping_softmax(vote_mapping_t *m) {
 
 
 /**
+ * Post-processing algorithm used by some gradient boosting machines.
+ **/
+static void
+vote_mapping_sigmoid(vote_mapping_t *m) {
+  for(size_t i=0; i<m->nb_outputs; i++) {
+    m->outputs[i].lower = (vote_exp(m->outputs[i].lower) /
+			   (1 + vote_exp(m->outputs[i].lower)));
+    
+    m->outputs[i].upper = (vote_exp(m->outputs[i].upper) /
+			   (1 + vote_exp(m->outputs[i].upper)));
+  }
+}
+
+
+/**
  * Apply a post processing algorithm on a mapping.
  **/
 static vote_outcome_t
@@ -97,7 +112,11 @@ vote_postproc_input(void *ctx, vote_mapping_t *m) {
   case VOTE_POST_PROCESS_SOFTMAX:
     vote_mapping_softmax(m);
     break;
-
+    
+  case VOTE_POST_PROCESS_SIGMOID:
+    vote_mapping_sigmoid(m);
+    break;
+    
   default:
   case VOTE_POST_PROCESS_NONE:
     break;
