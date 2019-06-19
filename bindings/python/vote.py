@@ -33,6 +33,10 @@ FAIL = 0
 PASS = 1
 
 
+try: import numpy as np
+except: pass
+
+
 def argmax(iterable):
     '''
     Returns the index of the largest value in an *iterable* of numbers
@@ -97,7 +101,6 @@ def _sklearn_dt_to_dict(tree):
     '''
     Convert a sklearn decision tree into a dictionary.
     '''
-    import numpy as np
     
     def normalize(matrix):
         for row in matrix:
@@ -134,7 +137,6 @@ def _sklearn_rf_to_dict(inst):
 
 class _NumPyJSONEncoder(json.JSONEncoder):
     def default(self, obj):
-        import numpy as np
         ty = type(obj)
         
         if issubclass(ty, np.ndarray):
