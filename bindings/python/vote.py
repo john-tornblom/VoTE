@@ -145,7 +145,8 @@ def _xgboost_json_to_dict(json_text):
 
     nodes = list(gen_nodes(json.loads(json_text)))
     nb_nodes = len(nodes)
-
+    idmap = {node['nodeid']: ind for ind, node in enumerate(nodes)}
+    
     obj = dict()
     obj['left'] = [-1] * nb_nodes
     obj['right'] = [-1] * nb_nodes
@@ -155,15 +156,15 @@ def _xgboost_json_to_dict(json_text):
     obj['nb_outputs'] = 1
 
     for node in nodes:
-        ind = node['nodeid']
+        ind = idmap[node['nodeid']]
         threshold = node.get('split_condition', -1)
         threshold = np.nextafter(threshold, threshold - 1)
 
         if 'yes' in node:
-            obj['left'][ind] = node['yes']
+            obj['left'][ind] = idmap[node['yes']]
 
         if 'no' in node:
-            obj['right'][ind] = node['no']
+            obj['right'][ind] = idmap[node['no']]
 
         obj['feature'][ind] = int(node.get('split', ' -1')[1:])
         obj['threshold'][ind] = threshold
