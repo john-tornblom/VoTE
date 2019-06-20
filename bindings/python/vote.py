@@ -279,13 +279,10 @@ class Ensemble(object):
         '''
         Convert an xgboost model *instance* into a VoTE ensemble.
         '''
-        if hasattr(instance, 'get_booster'):
-            params = instance.get_xgb_params()
-            instance = instance.get_booster()
-        else:
-            params = instance.get_params()
+        params = instance.get_xgb_params()
+        booster = instance.get_booster()
 
-        d = _xgboost_gb_to_dict(instance, params)
+        d = _xgboost_gb_to_dict(booster, params)
         return cls.from_string(json.dumps(d, cls=_NumPyJSONEncoder))
 
     @property
