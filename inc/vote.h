@@ -195,7 +195,7 @@ vote_ensemble_t *vote_ensemble_load_file(const char *filename);
 
 
 /**
- * Load an ensemble from a a JSON-based formated string.
+ * Load an ensemble from a JSON-based formated string.
  **/
 vote_ensemble_t *vote_ensemble_load_string(const char *filename);
 
