@@ -317,5 +317,5 @@ class Ensemble(object):
         s = _ffi.string(ptr)
         _lib.free(ptr)
         
-        return s
+        return s.decode('utf-8')
     
