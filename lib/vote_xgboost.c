@@ -206,15 +206,15 @@ vote_xgboost_load(FILE* f) {
       if(node.cleft == -1) {
 	switch(t->nb_outputs) {
 	case 1:
-	  t->value[j][0] = node.value;
+	  t->value[j][0] = (real_t)node.value;
 	  break;
 
 	default:
-	  t->value[j][i ? i % t->nb_outputs : 0] = node.value;
+	  t->value[j][i ? i % t->nb_outputs : 0] = (real_t)node.value;
 	  break;
 	}
       } else {
-	t->threshold[j] = node.value;
+	t->threshold[j] = (real_t)node.value;
 	t->feature[j]   = node.sindex & ((1U << 31) - 1U);
       }
     }
