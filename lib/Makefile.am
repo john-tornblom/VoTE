@@ -27,6 +27,7 @@ libvote_la_SOURCES = vote_mapping.c \
                      vote_abstract.c \
                      vote_postproc.c \
                      vote_csv.c \
+                     vote_xgboost.c \
                      vote_utils.c
 
 libvote_la_LIBADD = ../ext/libparson.la -lm

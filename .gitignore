@@ -14,6 +14,7 @@ src/vote_mappings
 src/vote_range
 src/vote_robustness
 src/vote_throughput
+src/vote_xgbconv
 examples/vote_mnist_window_robustness
 
 # Python byte-code

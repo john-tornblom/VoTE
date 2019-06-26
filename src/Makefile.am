@@ -20,7 +20,8 @@ bin_PROGRAMS = vote_accuracy \
                vote_throughput \
                vote_iospace \
                vote_robustness \
-               vote_range
+               vote_range \
+               vote_xgbconv
 
 vote_accuracy_SOURCES = accuracy.c
 vote_accuracy_CFLAGS = -std=c99 -I../inc
@@ -49,3 +50,7 @@ vote_robustness_LDADD = ../lib/libvote.la -lm
 vote_range_SOURCES = range.c
 vote_range_CFLAGS = -std=c99 -I../inc
 vote_range_LDADD = ../lib/libvote.la -lm
+
+vote_xgbconv_SOURCES = xgbconv.c
+vote_xgbconv_CFLAGS = -std=c99 -I../inc
+vote_xgbconv_LDADD = ../lib/libvote.la -lm

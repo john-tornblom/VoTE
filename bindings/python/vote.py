@@ -135,77 +135,6 @@ def _sklearn_rf_to_dict(inst):
                 post_process='divisor')
 
 
-def _xgboost_json_to_dict(json_text):
-
-    def gen_nodes(node):
-        yield node
-        for child in node.get('children', []):
-            for child in gen_nodes(child):
-                yield child
-
-    nodes = list(gen_nodes(json.loads(json_text)))
-    nb_nodes = len(nodes)
-    idmap = {node['nodeid']: ind for ind, node in enumerate(nodes)}
-    
-    obj = dict()
-    obj['left'] = [-1] * nb_nodes
-    obj['right'] = [-1] * nb_nodes
-    obj['feature'] = [-1] * nb_nodes
-    obj['threshold'] = [-1] * nb_nodes
-    obj['value'] = [0] * nb_nodes
-    obj['nb_outputs'] = 1
-
-    for node in nodes:
-        ind = idmap[node['nodeid']]
-        threshold = node.get('split_condition', -1)
-        threshold = np.nextafter(threshold, threshold - 1)
-
-        if 'yes' in node:
-            obj['left'][ind] = idmap[node['yes']]
-
-        if 'no' in node:
-            obj['right'][ind] = idmap[node['no']]
-
-        obj['feature'][ind] = int(node.get('split', ' -1')[1:])
-        obj['threshold'][ind] = threshold
-        obj['value'][ind] = [node.get('leaf', 0)]
-
-    return obj
-
-
-def _xgboost_gb_to_dict(booster, params):
-
-    objective = params.get('objective')
-    base_score = params.get('base_score')
-    post_process = 'none'
-
-    if objective == 'binary:logistic':
-        post_process = 'sigmoid'
-        base_score = np.log(base_score) - np.log(1 - base_score)
-
-    elif objective != 'reg:linear':
-        raise NotImplementedError
-
-    obj_list = list()
-    obj = dict()
-    obj['nb_inputs'] = len(booster.feature_names)
-    obj['nb_outputs'] = 1
-    obj['left'] = [-1]
-    obj['right'] = [-1]
-    obj['feature'] = [-1]
-    obj['threshold'] = [-1]
-    obj['value'] = [[base_score]]
-    obj_list.append(obj)
-
-    for json_text in booster.get_dump(dump_format='json'):
-        obj = _xgboost_json_to_dict(json_text)
-        obj['nb_inputs'] = len(booster.feature_names)
-        obj_list.append(obj)
-
-    return dict(trees=obj_list,
-                post_process=post_process)
-
-
 class _NumPyJSONEncoder(json.JSONEncoder):
     def default(self, obj):
         ty = type(obj)
@@ -276,16 +205,18 @@ class Ensemble(object):
         return cls.from_string(json.dumps(d, cls=_NumPyJSONEncoder))
 
     @classmethod
-    def from_xgboost(cls, instance):
+    def from_xgboost(cls, booster):
         '''
         Convert an xgboost model *instance* into a VoTE ensemble.
         '''
-        params = instance.get_xgb_params()
-        booster = instance.get_booster()
+        if hasattr(booster, 'get_booster'):
+            booster = booster.get_booster()
 
-        d = _xgboost_gb_to_dict(booster, params)
-        return cls.from_string(json.dumps(d, cls=_NumPyJSONEncoder))
-
+        buf = _ffi.from_buffer(booster.save_raw())
+        ptr = _lib.vote_xgboost_load_blob(buf, len(buf))
+        
+        return cls(ptr)
+    
     @property
     def nb_inputs(self):
         '''

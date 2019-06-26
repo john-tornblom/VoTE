@@ -201,6 +201,18 @@ vote_ensemble_t *vote_ensemble_load_string(const char *filename);
 
 
 /**
+ * Load an ensemble from disk persisted in the (binary) xgboost format.
+ **/
+vote_ensemble_t *vote_xgboost_load_file(const char *filename);
+
+
+/**
+ * Load an ensemble from a blob in the (binary) xgboost format.
+ **/
+vote_ensemble_t* vote_xgboost_load_blob(void *data, size_t size);
+
+
+/**
  * Save an ensemble as a JSON-based formated string.
  **/
 const char* vote_ensemble_save_string(const vote_ensemble_t *e);
