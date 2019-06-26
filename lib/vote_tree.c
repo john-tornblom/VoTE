@@ -27,7 +27,7 @@ see <http://www.gnu.org/licenses/>.  */
 
 
 /**
- * Parse a JSON float array.
+ * Parse a JSON number array into an array or reals.
  **/
 static void
 vote_parse_floats(struct json_array_t *array, real_t** mem, size_t* length) {
@@ -46,7 +46,23 @@ vote_parse_floats(struct json_array_t *array, real_t** mem, size_t* length) {
 
 
 /**
- * Parse a JSON integer array.
+ * Encode an array of reals into a JSON number array.
+ **/
+static struct json_value_t*
+vote_encode_reals(real_t* values, size_t length) {
+  struct json_value_t* root = json_value_init_array();
+  struct json_array_t* array = json_value_get_array(root);
+  
+  for(size_t i=0; i<length; i++) {
+    json_array_append_number(array, values[i]);
+  }
+
+  return root;
+}
+
+
+/**
+ * Parse a JSON number array into an array of integers.
  **/
 static void
 vote_parse_ints(struct json_array_t *array, int** mem, size_t* length) {
@@ -61,6 +77,22 @@ vote_parse_ints(struct json_array_t *array, int** mem, size_t* length) {
 
   *length = _length;
   *mem = _mem;
+}
+
+
+/**
+ * Encode an array of integers into a JSON number array.
+ **/
+static struct json_value_t*
+vote_encode_ints(int* values, size_t length) {
+  struct json_value_t* root = json_value_init_array();
+  struct json_array_t* array = json_value_get_array(root);
+  
+  for(size_t i=0; i<length; i++) {
+    json_array_append_number(array, values[i]);
+  }
+
+  return root;
 }
 
 
@@ -113,6 +145,30 @@ vote_tree_parse(struct json_value_t *root) {
   }
 
   return tree;
+}
+
+
+struct json_value_t*
+vote_tree_encode(const vote_tree_t* t) {
+  struct json_value_t* root = json_value_init_object();
+  struct json_object_t* obj = json_value_get_object(root);
+  struct json_value_t* value = json_value_init_array();
+  struct json_array_t* array = json_value_get_array(value);
+  
+  json_object_set_number(obj, "nb_inputs", t->nb_inputs);
+  json_object_set_number(obj, "nb_outputs", t->nb_outputs);
+
+  json_object_set_value(obj, "left", vote_encode_ints(t->left, t->nb_nodes));
+  json_object_set_value(obj, "right", vote_encode_ints(t->right, t->nb_nodes));
+  json_object_set_value(obj, "feature", vote_encode_ints(t->feature, t->nb_nodes));
+  json_object_set_value(obj, "threshold", vote_encode_reals(t->threshold, t->nb_nodes));
+  json_object_set_value(obj, "value", value);
+  
+  for(size_t i=0; i<t->nb_nodes; i++) {
+    json_array_append_value(array, vote_encode_reals(t->value[i], t->nb_outputs));
+  }
+
+  return root;
 }
 
 

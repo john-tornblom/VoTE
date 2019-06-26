@@ -378,3 +378,13 @@ class Ensemble(object):
             
         return _lib.vote_ensemble_approximate(self.ptr, bounds)
 
+    def serialize(self):
+        '''
+        Serialize the ensemble into a JSON-formatted string.
+        '''
+        ptr = _lib.vote_ensemble_save_string(self.ptr)
+        s = _ffi.string(ptr)
+        _lib.free(ptr)
+        
+        return s
+    

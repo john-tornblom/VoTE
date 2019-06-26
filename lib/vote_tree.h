@@ -51,6 +51,12 @@ vote_tree_t *vote_tree_parse(struct json_value_t *root);
 
 
 /**
+ * Encode a tree into a JSON dictonary.
+ **/
+struct json_value_t *vote_tree_encode(const vote_tree_t* t);
+
+
+/**
  * Delete a tree and all of its members.
  **/
 void vote_tree_del(vote_tree_t* t);

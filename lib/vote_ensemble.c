@@ -31,6 +31,41 @@ see <http://www.gnu.org/licenses/>.  */
 #include "vote_postproc.h"
 
 
+static struct json_value_t*
+vote_ensemble_encode(const vote_ensemble_t* e) {
+  struct json_value_t* root = json_value_init_object();
+  struct json_value_t* val = json_value_init_array();
+  struct json_array_t* array = json_value_get_array(val);
+  struct json_object_t* obj = json_value_get_object(root);
+
+  json_object_set_value(obj, "trees", val);
+  for(size_t i=0; i<e->nb_trees; i++) {
+    val = vote_tree_encode(e->trees[i]);
+    json_array_append_value(array, val);
+  }
+
+  switch(e->post_process) {
+  case VOTE_POST_PROCESS_NONE:
+    json_object_set_string(obj, "post_process", "none");
+    break;
+
+  case VOTE_POST_PROCESS_DIVISOR:
+    json_object_set_string(obj, "post_process", "divisor");
+    break;
+
+  case VOTE_POST_PROCESS_SOFTMAX:
+    json_object_set_string(obj, "post_process", "softmax");
+    break;
+
+  case VOTE_POST_PROCESS_SIGMOID:
+    json_object_set_string(obj, "post_process", "sigmoid");
+    break;
+  }
+
+  return root;
+}
+
+
 static vote_ensemble_t*
 vote_ensemble_load(struct json_value_t *root) {
   struct json_object_t *obj;
@@ -93,6 +128,13 @@ vote_ensemble_load_file(const char *filename) {
 }
 
 
+bool
+vote_ensemble_save_file(const vote_ensemble_t *e, const char *filename) {
+  struct json_value_t *root = vote_ensemble_encode(e);
+  return json_serialize_to_file(root, filename) == JSONSuccess;
+}
+
+
 vote_ensemble_t*
 vote_ensemble_load_string(const char *string) {
   struct json_value_t *root = json_parse_string(string);
@@ -102,6 +144,13 @@ vote_ensemble_load_string(const char *string) {
   json_value_free(root);
   
   return e;
+}
+
+
+const char*
+vote_ensemble_save_string(const vote_ensemble_t *e) {
+  struct json_value_t *root = vote_ensemble_encode(e);
+  return json_serialize_to_string(root);
 }
 
 

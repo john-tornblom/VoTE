@@ -131,7 +131,12 @@ class TestEnsembleBasics(SimpleVoTETestCase):
             y_pred = self.ensemble.eval(x)
             self.assertAlmostEqual(y, y_pred[0])
 
-
+    def test_serialize(self):
+        o1 = json.loads(self.ensemble.serialize())
+        o2 = json.loads(self.serialized_ensemble)
+        self.assertEqual(o1, o2)
+        
+    
 class TestMappingEdges(SimpleVoTETestCase):
     '''
     Check edges of mappings enumerated by VoTE against the oracle (f).

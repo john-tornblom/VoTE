@@ -201,6 +201,18 @@ vote_ensemble_t *vote_ensemble_load_string(const char *filename);
 
 
 /**
+ * Save an ensemble as a JSON-based formated string.
+ **/
+const char* vote_ensemble_save_string(const vote_ensemble_t *e);
+
+
+/**
+ * Save an ensemble to disk in a JSON-based format.
+ **/
+bool vote_ensemble_save_file(const vote_ensemble_t *e, const char *filename);
+
+
+/**
  * Delete an ensemble and all of its trees.
  **/
 void vote_ensemble_del(vote_ensemble_t* f);
