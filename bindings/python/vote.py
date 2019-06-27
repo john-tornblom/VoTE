@@ -97,6 +97,25 @@ def _vote_mapping_python_cb(ctx, mapping):
     return callback(mapping)
 
 
+def _mk_bounds(dims, limits):
+    '''
+    Create an array of bounds with length *dims*, and initialize the bounds with
+    *limits*, i.e. a list of pairs with the lower and upper limit
+    in each dimension, e.g. [(0, 1), (0, 1)].
+    '''
+    limits = limits or list()
+    bounds = _ffi.new('vote_bound_t[%d]' % dims)
+    for ind in range(dims):
+        bounds[ind].lower = -float('inf')
+        bounds[ind].upper = float('inf')
+
+    for ind, limit in enumerate(limits):
+        bounds[ind].lower = limit[0]
+        bounds[ind].upper = limit[1]
+
+    return bounds
+
+
 def _sklearn_dt_to_dict(tree):
     '''
     Convert a sklearn decision tree into a dictionary.
@@ -264,19 +283,7 @@ class Ensemble(object):
         Returns true if all mappings PASS the callback function, or
         false if any of the mappings FAIL the callback function.
         '''
-        ctx = _ffi.NULL
-        bounds = _ffi.new('vote_bound_t[%d]' % self.nb_inputs)
-        cb = _ffi.callback('vote_mapping_cb_t')
-        
-        for ind in range(self.nb_inputs):
-            bounds[ind].lower = -float('inf')
-            bounds[ind].upper = float('inf')
-
-        domain = domain or list()
-        for ind, bound in enumerate(domain):
-            bounds[ind].lower = bound[0]
-            bounds[ind].upper = bound[1]
-            
+        bounds = _mk_bounds(self.nb_inputs, domain)
         ctx = _ffi.new_handle(callback)
         cb = _lib._vote_mapping_python_cb
         return _lib.vote_ensemble_forall(self.ptr, bounds, cb, ctx)
@@ -289,19 +296,7 @@ class Ensemble(object):
         Returns true if all conclusive mappings PASS the callback function, or
         false if any of the conclusive mappings FAIL the callback function.
         '''
-        ctx = _ffi.NULL
-        bounds = _ffi.new('vote_bound_t[%d]' % self.nb_inputs)
-        cb = _ffi.callback('vote_mapping_cb_t')
-        
-        for ind in range(self.nb_inputs):
-            bounds[ind].lower = -float('inf')
-            bounds[ind].upper = float('inf')
-
-        domain = domain or list()
-        for ind, bound in enumerate(domain):
-            bounds[ind].lower = bound[0]
-            bounds[ind].upper = bound[1]
-            
+        bounds = _mk_bounds(self.nb_inputs, domain)
         ctx = _ffi.new_handle(callback)
         cb = _lib._vote_mapping_python_cb
         return _lib.vote_ensemble_absref(self.ptr, bounds, cb, ctx)
@@ -310,17 +305,7 @@ class Ensemble(object):
         '''
         Approximate a pessimistic and sound mapping for a given input *domain*.
         '''
-        bounds = _ffi.new('vote_bound_t[%d]' % self.nb_inputs)
-        
-        for ind in range(self.nb_inputs):
-            bounds[ind].lower = -float('inf')
-            bounds[ind].upper = float('inf')
-
-        domain = domain or list()
-        for ind, bound in enumerate(domain):
-            bounds[ind].lower = bound[0]
-            bounds[ind].upper = bound[1]
-            
+        bounds = _mk_bounds(self.nb_inputs, domain)
         return _lib.vote_ensemble_approximate(self.ptr, bounds)
 
     def serialize(self):
