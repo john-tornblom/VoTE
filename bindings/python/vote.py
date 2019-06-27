@@ -168,7 +168,7 @@ class _NumPyJSONEncoder(json.JSONEncoder):
             return json.JSONEncoder.default(self, obj)
 
 
-class Ensemble(object):
+class Ensemble:
     '''
     An ensemble is a collection of trees that captures statistical properties 
     of a system-of-intrest.
@@ -226,7 +226,7 @@ class Ensemble(object):
     @classmethod
     def from_xgboost(cls, booster):
         '''
-        Convert an xgboost model *instance* into a VoTE ensemble.
+        Convert an xgboost *booster* into a VoTE ensemble.
         '''
         if hasattr(booster, 'get_booster'):
             booster = booster.get_booster()
