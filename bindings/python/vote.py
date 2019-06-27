@@ -231,6 +231,20 @@ class Ensemble(object):
         '''
         return self.ptr.nb_outputs
 
+    @property
+    def nb_trees(self):
+        '''
+        The number of trees in this ensemble.
+        '''
+        return self.ptr.nb_trees
+
+    @property
+    def nb_nodes(self):
+        '''
+        The number of nodes in this ensemble.
+        '''
+        return self.ptr.nb_nodes
+    
     def eval(self, *args):
         '''
         Evaluate this ensemble on a concrete sample.
