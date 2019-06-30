@@ -71,10 +71,10 @@ typedef struct vote_tree vote_tree_t;
  * the random forest models from gradient boosting models during prediction.
  **/
 typedef enum vote_post_process {
-  VOTE_POST_PROCESS_NONE,
-  VOTE_POST_PROCESS_DIVISOR,
-  VOTE_POST_PROCESS_SOFTMAX,
-  VOTE_POST_PROCESS_SIGMOID
+  VOTE_POST_PROCESS_NONE     = 0,
+  VOTE_POST_PROCESS_DIVISOR  = 1,
+  VOTE_POST_PROCESS_SOFTMAX  = 2,
+  VOTE_POST_PROCESS_SIGMOID  = 3
 } vote_post_process_t;
 
 
