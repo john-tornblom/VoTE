@@ -125,6 +125,9 @@ class TestEnsembleBasics(SimpleVoTETestCase):
         self.assertEqual(self.ensemble.nb_inputs, 1)
         self.assertEqual(self.ensemble.nb_outputs, 1)
 
+    def test_name_of_post_processing_algorithm(self):
+        self.assertEqual(self.ensemble.post_processing_algorithm, 'divisor')
+        
     def test_eval(self):
         for x in [1, 2, 5, 6, 9, float('inf')]:
             y = self.f(x)
