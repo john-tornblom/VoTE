@@ -201,10 +201,9 @@ def _catboost_gb_to_dict(inst):
         tree_obj['feature'] = [-1] * nb_nodes
         tree_obj['threshold'] = [None] * nb_nodes
         tree_obj['value'] = [[None] * nb_outputs] * nb_nodes
-
-        tree_obj['left'][0:nb_nodes/2] = [ind for ind in range(2, nb_nodes, 2)
+        tree_obj['left'][0:nb_nodes//2] = [ind for ind in range(2, nb_nodes, 2)
                                           if ind % 2 == 0]
-        tree_obj['right'][0:nb_nodes/2] = [ind for ind in range(1, nb_nodes, 2)
+        tree_obj['right'][0:nb_nodes//2] = [ind for ind in range(1, nb_nodes, 2)
                                            if ind % 2 == 1]
 
         for node_id in range(2 ** nb_splits - 1):
