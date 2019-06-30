@@ -7,13 +7,14 @@ matrix:
       install:
         - "sudo apt-get install autoconf libtool build-essential"
         - "sudo apt-get install python-cffi python-sklearn"
+        - "python2 -m pip install catboost --user"
       script:
         - "./bootstrap.sh"
-        - "./configure"
+        - "PYTHON=python2 ./configure"
         - "make clean"
         - "make"
-        - "python bindings/python/setup.py test"
-        - "python bindings/python/example.py"
+        - "python2 bindings/python/setup.py test"
+        - "python2 bindings/python/example.py"
 
     - name: "Ubuntu 16.04 with Python 3 bindings"
       os: linux
@@ -22,6 +23,7 @@ matrix:
       install:
         - "sudo apt-get install autoconf libtool build-essential"
         - "sudo apt-get install python3-cffi python3-sklearn"
+        - "python3 -m pip install catboost --user"
       script:
         - "./bootstrap.sh"
         - "PYTHON=python3 ./configure"
@@ -34,7 +36,7 @@ matrix:
       os: osx
       language: c
       install:
-        - "pip install cffi sklearn"
+        - "pip install cffi sklearn catboost"
       script:
         - "./bootstrap.sh"
         - "./configure"

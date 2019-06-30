@@ -481,6 +481,19 @@ class TestModelConvert(unittest.TestCase):
         for xvec, y_pred in zip(X, Y_pred):
             self.assertEqual(e.eval(*xvec), list(y_pred))
 
+    def test_catboost_gb_binary_classification(self):
+        from catboost import CatBoostClassifier
+        from sklearn.datasets import make_classification
+        
+        X, Y = make_classification(n_classes=2, random_state=12345)
+        m = CatBoostClassifier(iterations=10, random_state=12345)
+        m.fit(X, Y)
+        Y_pred = m.predict(X, prediction_type='RawFormulaVal')
+        
+        e = vote.Ensemble.from_catboost(m)
+        for xvec, y_pred in zip(X, Y_pred):
+            self.assertAlmostEqual(e.eval(*xvec)[0], y_pred)
+                
     def test_sklearn_rf_multiclass_classification(self):
         from sklearn.ensemble import RandomForestClassifier
         from sklearn.datasets import make_classification
@@ -495,6 +508,23 @@ class TestModelConvert(unittest.TestCase):
         for xvec, y_pred in zip(X, Y_pred):
             self.assertEqual(e.eval(*xvec), list(y_pred))
 
+    def test_catboost_gb_multiclass_classification(self):
+        from catboost import CatBoostClassifier
+        from sklearn.datasets import make_classification
+        import numpy as np
+        
+        X, Y = make_classification(n_classes=3, n_clusters_per_class=2,
+                                   n_informative=3, random_state=12345)
+        m = CatBoostClassifier(loss_function='MultiClass', classes_count=3,
+                               iterations=10, random_state=12345)
+        m.fit(X, Y)
+        Y_pred = m.predict_proba(X)
+        
+        e = vote.Ensemble.from_catboost(m)
+        for xvec, y_pred in zip(X, Y_pred):
+            for v1, v2 in zip(e.eval(*xvec), y_pred):
+                self.assertAlmostEqual(v1, v2)
+
     def test_sklearn_rf_univariate_regression(self):
         from sklearn.ensemble import RandomForestRegressor
         from sklearn.datasets import make_regression
@@ -508,6 +538,19 @@ class TestModelConvert(unittest.TestCase):
         for xvec, y_pred in zip(X, Y_pred):
             self.assertEqual(e.eval(*xvec), y_pred)
 
+    def test_catboost_gb_univariate_regression(self):
+        from catboost import CatBoostRegressor
+        from sklearn.datasets import make_regression
+
+        X, Y = make_regression(n_targets=1, random_state=12345)
+        m = CatBoostRegressor(iterations=10, random_state=12345)
+        m.fit(X, Y)
+        Y_pred = m.predict(X)
+        
+        e = vote.Ensemble.from_catboost(m)
+        for xvec, y_pred in zip(X, Y_pred):
+            self.assertEqual(e.eval(*xvec), y_pred)
+            
     def test_sklearn_rf_multivariate_regression(self):
         from sklearn.ensemble import RandomForestRegressor
         from sklearn.datasets import make_regression

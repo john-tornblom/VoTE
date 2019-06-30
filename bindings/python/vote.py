@@ -20,7 +20,10 @@
 VoTE (Verifier of Tree Ensembles) is a toolsuite for analyzing input/output
 mappings of decision trees and tree ensembles.
 '''
+import collections
 import json
+import os
+import tempfile
 
 from _vote import ffi as _ffi
 from _vote import lib as _lib
@@ -163,6 +166,63 @@ def _sklearn_rf_to_dict(inst):
                 post_process='divisor')
 
 
+def _catboost_gb_to_dict(inst):
+    '''
+    Convert a CatBoost model into a dictionary.
+    '''
+    filename = tempfile.mktemp()
+    inst.save_model(filename, format='json')
+    with open(filename, 'r') as f:
+        cb = json.load(f)
+
+    os.remove(filename)
+
+    nb_inputs = len(cb['features_info']['float_features'])
+    nb_outputs = (cb['model_info']['params']['data_processing_options']
+                  ['classes_count'] or 1)
+    if nb_outputs > 1:
+        post_process = 'softmax'
+    else:
+        post_process = 'none'
+
+    tree_obj_list = list()
+    for tree in cb['oblivious_trees']:
+        tree_obj = dict()
+        tree_obj['nb_inputs'] = nb_inputs
+        tree_obj['nb_outputs'] = nb_outputs
+
+        nb_splits = len(tree['splits'])
+        depth = nb_splits + 1
+        nb_nodes = (2 ** depth) - 1
+        splits = list(reversed(tree['splits']))
+
+        tree_obj['left'] = [-1] * nb_nodes
+        tree_obj['right'] = [-1] * nb_nodes
+        tree_obj['feature'] = [-1] * nb_nodes
+        tree_obj['threshold'] = [None] * nb_nodes
+        tree_obj['value'] = [[None] * nb_outputs] * nb_nodes
+
+        tree_obj['left'][0:nb_nodes/2] = [ind for ind in range(2, nb_nodes, 2)
+                                          if ind % 2 == 0]
+        tree_obj['right'][0:nb_nodes/2] = [ind for ind in range(1, nb_nodes, 2)
+                                           if ind % 2 == 1]
+
+        for node_id in range(2 ** nb_splits - 1):
+            d = int(np.log2(node_id + 1))
+            tree_obj['feature'][node_id] = splits[d]['float_feature_index']
+            tree_obj['threshold'][node_id] = splits[d]['border']
+
+        queue = collections.deque(tree['leaf_values'])
+        for node_id in range(2 ** nb_splits - 1, nb_nodes):
+            values = [queue.pop() for _ in range(nb_outputs)]
+            tree_obj['value'][node_id] = list(reversed(values))
+
+        tree_obj_list.append(tree_obj)
+
+    return dict(trees=tree_obj_list,
+                post_process=post_process)
+
+
 class _NumPyJSONEncoder(json.JSONEncoder):
     def default(self, obj):
         ty = type(obj)
@@ -232,6 +292,22 @@ class Ensemble:
         d = conv[name](instance)
         return cls.from_string(json.dumps(d, cls=_NumPyJSONEncoder))
 
+    @classmethod
+    def from_catboost(cls, instance):
+        '''
+        Convert an sklearn model *instance* into a VoTE ensemble.
+        '''
+        conv = {
+            'CatBoostClassifier': _catboost_gb_to_dict,
+            'CatBoostRegressor': _catboost_gb_to_dict,
+        }
+        name = type(instance).__name__
+        if name not in conv:
+            raise NotImplementedError
+        
+        d = conv[name](instance)
+        return cls.from_string(json.dumps(d, cls=_NumPyJSONEncoder))
+    
     @classmethod
     def from_xgboost(cls, booster):
         '''
