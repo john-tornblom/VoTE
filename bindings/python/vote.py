@@ -88,6 +88,14 @@ def mapping_check_argmin(mapping, expected):
     return _lib.vote_mapping_check_argmin(mapping, expected)
 
 
+def mapping_copy(mapping):
+    '''
+    Create a (deep) copy of a mapping.
+    '''
+    mapping = _lib.vote_mapping_copy(mapping)
+    return _ffi.gc(mapping, _lib.vote_mapping_del)
+
+
 @_ffi.def_extern()
 def _vote_mapping_python_cb(ctx, mapping):
     '''
