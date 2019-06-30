@@ -102,6 +102,7 @@ def _vote_mapping_python_cb(ctx, mapping):
     Callback hook from VoTE Core forall/absref iterations.
     '''
     callback = _ffi.from_handle(ctx)
+    mapping = mapping_copy(mapping)
     return callback(mapping)
 
 
