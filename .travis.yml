@@ -19,11 +19,11 @@ matrix:
     - name: "Ubuntu 16.04 with Python 3 bindings"
       os: linux
       dist: xenial
-      language: c
+      language: python
+      python: "3.6"
       install:
         - "sudo apt-get install autoconf libtool build-essential"
-        - "sudo apt-get install python3-cffi python3-sklearn"
-        - "python3 -m pip install catboost --user"
+        - "pip install cffi sklearn catboost"
       script:
         - "./bootstrap.sh"
         - "PYTHON=python3 ./configure"
