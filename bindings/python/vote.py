@@ -39,7 +39,7 @@ except: pass
 
 def argmax(iterable):
     '''
-    Returns the index of the largest value in an *iterable* of numbers
+    Returns the index of the largest value in an *iterable* of numbers.
     '''
     fvec = [float(el) for el in iterable]
     return _lib.vote_argmax(fvec, len(fvec))
@@ -47,7 +47,7 @@ def argmax(iterable):
 
 def argmin(iterable):
     '''
-    Returns the index of the smallest value in an *iterable* of numbers
+    Returns the index of the smallest value in an *iterable* of numbers.
     '''
     fvec = [float(el) for el in iterable]
     return _lib.vote_argmin(fvec, len(fvec))
@@ -62,7 +62,7 @@ def mapping_precise(mapping):
 
 def mapping_argmax(mapping):
     '''
-    Returns the index of the largest value in a *mapping*
+    Returns the index of the largest output value in a *mapping*.
     '''
     return _lib.vote_mapping_argmax(mapping)
 
@@ -76,7 +76,7 @@ def mapping_check_argmax(mapping, expected):
 
 def mapping_argmin(mapping):
     '''
-    Returns the index of the smallest value in a *mapping*
+    Returns the index of the smallest output value in a *mapping*.
     '''
     return _lib.vote_mapping_argmin(mapping)
 
