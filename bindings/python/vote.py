@@ -306,7 +306,8 @@ class Ensemble:
         Approximate a pessimistic and sound mapping for a given input *domain*.
         '''
         bounds = _mk_bounds(self.nb_inputs, domain)
-        return _lib.vote_ensemble_approximate(self.ptr, bounds)
+        ptr = _lib.vote_ensemble_approximate(self.ptr, bounds)
+        return _ffi.gc(ptr, _lib.vote_mapping_del)
 
     def serialize(self):
         '''
