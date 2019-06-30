@@ -248,8 +248,17 @@ vote_xgboost_load_file(const char *filename) {
 
 vote_ensemble_t*
 vote_xgboost_load_blob(void *data, size_t size) {
-  vote_ensemble_t* e ;
-  FILE *f = fmemopen(data, size, "rb");
+  vote_ensemble_t* e;
+  FILE *f;
+  
+#if _POSIX_C_SOURCE >= 200809L
+  f = fmemopen(data, size, "rb");
+#else
+  f = tmpfile();
+  fwrite(data, size, sizeof(unsigned char), f);
+  rewind(f);
+#endif
+  
   assert(f);
 
   e = vote_xgboost_load(f);
