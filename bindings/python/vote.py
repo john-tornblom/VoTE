@@ -263,6 +263,14 @@ class Ensemble:
         The number of nodes in this ensemble.
         '''
         return self.ptr.nb_nodes
+
+    @property
+    def post_processing_algorithm(self):
+        '''
+        The post processing algorithm applied.
+        '''
+        tbl = ('none', 'divisor', 'softmax', 'sigmoid')
+        return tbl[self.ptr.post_process]
     
     def eval(self, *args):
         '''
