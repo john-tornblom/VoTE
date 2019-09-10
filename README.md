@@ -54,7 +54,9 @@ to discuss the solution properly before you commit time and effort.
 - J. Törnblom and S. Nadjm-Tehrani, **An Abstraction-Refinement Approach to
   Formal Verification of Tree Ensembles**, *In proceedings of 2nd International
   workshop on Artificial Intelligence Safety Engineering, held in conjunction
-  with SAFECOMP*, Springer, 2019. Available as [preprint][paper:absref].
+  with SAFECOMP*, Springer, 2019. DOI:
+  [10.1007/978-3-030-26250-1_24](https://doi.org/10.1007/978-3-030-26250-1_24).
+  Available as [preprint][paper:absref].
 
 - J. Törnblom and S. Nadjm-Tehrani, **Formal Verification of Input-Output
   Mappings of Tree Ensembles**. *Currently in submission*. Available as
