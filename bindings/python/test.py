@@ -552,7 +552,7 @@ class TestModelConvert(unittest.TestCase):
         
         e = vote.Ensemble.from_sklearn(m)
         for xvec, y_pred in zip(X, Y_pred):
-            self.assertEqual(e.eval(*xvec), y_pred)
+            self.assertEqual(e.eval(*xvec)[0], y_pred)
 
     def test_catboost_gb_univariate_regression(self):
         from catboost import CatBoostRegressor
@@ -565,7 +565,7 @@ class TestModelConvert(unittest.TestCase):
         
         e = vote.Ensemble.from_catboost(m)
         for xvec, y_pred in zip(X, Y_pred):
-            self.assertEqual(e.eval(*xvec), y_pred)
+            self.assertEqual(e.eval(*xvec)[0], y_pred)
 
     def test_xgboost_gb_univariate_regression(self):
         from xgboost import XGBRegressor
@@ -579,7 +579,7 @@ class TestModelConvert(unittest.TestCase):
         e = vote.Ensemble.from_xgboost(m)
         for xvec, y_pred in zip(X, Y_pred):
             # precision in xgb is not great with 32bit floats
-            self.assertAlmostEqual(e.eval(*xvec), y_pred, places=3)
+            self.assertAlmostEqual(e.eval(*xvec)[0], y_pred, places=3)
 
     def test_sklearn_rf_multivariate_regression(self):
         from sklearn.ensemble import RandomForestRegressor
