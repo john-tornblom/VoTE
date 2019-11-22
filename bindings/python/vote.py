@@ -178,9 +178,10 @@ def _catboost_gb_to_dict(inst):
     os.remove(filename)
 
     nb_inputs = len(cb['features_info']['float_features'])
-    nb_outputs = (cb['model_info']['params']['data_processing_options']
-                  ['classes_count'] or 1)
-    if nb_outputs > 1:
+    nb_classes = (cb['model_info']['params']['data_processing_options']
+                  ['classes_count'])
+
+    if nb_classes > 1:
         post_process = 'softmax'
     else:
         post_process = 'none'
@@ -188,14 +189,15 @@ def _catboost_gb_to_dict(inst):
     tree_obj_list = list()
     for tree in cb['oblivious_trees']:
         tree_obj = dict()
-        tree_obj['nb_inputs'] = nb_inputs
-        tree_obj['nb_outputs'] = nb_outputs
-
+        
         nb_splits = len(tree['splits'])
         depth = nb_splits + 1
         nb_nodes = (2 ** depth) - 1
-        splits = list(reversed(tree['splits']))
-
+        nb_leaves = len(tree['leaf_values'])
+        nb_outputs = nb_leaves / (2 ** nb_splits)
+        
+        tree_obj['nb_inputs'] = nb_inputs
+        tree_obj['nb_outputs'] = nb_outputs
         tree_obj['left'] = [-1] * nb_nodes
         tree_obj['right'] = [-1] * nb_nodes
         tree_obj['feature'] = [-1] * nb_nodes
@@ -206,6 +208,7 @@ def _catboost_gb_to_dict(inst):
         tree_obj['right'][0:nb_nodes//2] = [ind for ind in range(1, nb_nodes, 2)
                                            if ind % 2 == 1]
 
+        splits = list(reversed(tree['splits']))
         for node_id in range(2 ** nb_splits - 1):
             d = int(np.log2(node_id + 1))
             tree_obj['feature'][node_id] = splits[d]['float_feature_index']

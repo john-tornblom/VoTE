@@ -564,6 +564,20 @@ class TestModelConvert(unittest.TestCase):
         for xvec, y_pred in zip(X, Y_pred):
             self.assertEqual(e.eval(*xvec), list(y_pred))
 
-            
+    def test_catboost_gb_multivariate_regression(self):
+        from catboost import CatBoostRegressor
+        from sklearn.datasets import make_regression
+
+        X, Y = make_regression(n_targets=3, random_state=12345)
+        m = CatBoostRegressor(n_estimators=10, random_state=12345,
+                              loss_function='MultiRMSE')
+        m.fit(X, Y)
+        Y_pred = m.predict(X)
+        
+        e = vote.Ensemble.from_catboost(m)
+        for xvec, y_pred in zip(X, Y_pred):
+            self.assertEqual(e.eval(*xvec), list(y_pred))
+  
+
 if __name__ == "__main__":
     unittest.main()
