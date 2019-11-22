@@ -201,7 +201,7 @@ def _catboost_gb_to_dict(inst):
         depth = nb_splits + 1
         nb_nodes = (2 ** depth) - 1
         nb_leaves = len(tree['leaf_values'])
-        nb_outputs = nb_leaves / (2 ** nb_splits)
+        nb_outputs = nb_leaves // (2 ** nb_splits)
         
         tree_obj['nb_inputs'] = nb_inputs
         tree_obj['nb_outputs'] = nb_outputs
