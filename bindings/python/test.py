@@ -513,7 +513,6 @@ class TestModelConvert(unittest.TestCase):
     def test_catboost_gb_multiclass_classification(self):
         from catboost import CatBoostClassifier
         from sklearn.datasets import make_classification
-        import numpy as np
         
         X, Y = make_classification(n_classes=3, n_clusters_per_class=2,
                                    n_informative=3, random_state=12345)
