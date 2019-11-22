@@ -488,12 +488,14 @@ class TestModelConvert(unittest.TestCase):
         X, Y = make_classification(n_classes=2, random_state=12345)
         m = CatBoostClassifier(iterations=10, random_state=12345)
         m.fit(X, Y)
-        Y_pred = m.predict(X, prediction_type='RawFormulaVal')
+        Y_pred = m.predict_proba(X)
         
         e = vote.Ensemble.from_catboost(m)
         for xvec, y_pred in zip(X, Y_pred):
-            self.assertAlmostEqual(e.eval(*xvec)[0], y_pred)
-                
+            p = e.eval(*xvec)[0]
+            for v1, v2 in zip([1-p, p], y_pred):
+                self.assertAlmostEqual(v1, v2)
+            
     def test_sklearn_rf_multiclass_classification(self):
         from sklearn.ensemble import RandomForestClassifier
         from sklearn.datasets import make_classification

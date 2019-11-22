@@ -183,9 +183,16 @@ def _catboost_gb_to_dict(inst):
 
     if nb_classes > 1:
         post_process = 'softmax'
-    else:
+
+    elif inst._estimator_type == 'classifier':
+        post_process = 'sigmoid'
+
+    elif inst._estimator_type == 'regressor':
         post_process = 'none'
 
+    else:
+        raise NotImplementedError
+    
     tree_obj_list = list()
     for tree in cb['oblivious_trees']:
         tree_obj = dict()
