@@ -495,7 +495,22 @@ class TestModelConvert(unittest.TestCase):
             p = e.eval(*xvec)[0]
             for v1, v2 in zip([1-p, p], y_pred):
                 self.assertAlmostEqual(v1, v2)
-            
+
+    def test_xgboost_gb_binary_classification(self):
+        from xgboost import XGBClassifier
+        from sklearn.datasets import make_classification
+        
+        X, Y = make_classification(n_classes=2, random_state=12345)
+        m = XGBClassifier(iterations=10, random_state=12345)
+        m.fit(X, Y)
+        Y_pred = m.predict_proba(X)
+        
+        e = vote.Ensemble.from_xgboost(m)
+        for xvec, y_pred in zip(X, Y_pred):
+            p = e.eval(*xvec)[0]
+            for v1, v2 in zip([1-p, p], y_pred):
+                self.assertAlmostEqual(v1, v2, places=6)
+                
     def test_sklearn_rf_multiclass_classification(self):
         from sklearn.ensemble import RandomForestClassifier
         from sklearn.datasets import make_classification
@@ -551,7 +566,21 @@ class TestModelConvert(unittest.TestCase):
         e = vote.Ensemble.from_catboost(m)
         for xvec, y_pred in zip(X, Y_pred):
             self.assertEqual(e.eval(*xvec), y_pred)
-            
+
+    def test_xgboost_gb_univariate_regression(self):
+        from xgboost import XGBRegressor
+        from sklearn.datasets import make_regression
+
+        X, Y = make_regression(n_targets=1, random_state=12345)
+        m = XGBRegressor(iterations=10, base_score=0, random_state=12345)
+        m.fit(X, Y)
+        Y_pred = m.predict(X)
+        
+        e = vote.Ensemble.from_xgboost(m)
+        for xvec, y_pred in zip(X, Y_pred):
+            # precision in xgb is not great with 32bit floats
+            self.assertAlmostEqual(e.eval(*xvec), y_pred, places=3)
+
     def test_sklearn_rf_multivariate_regression(self):
         from sklearn.ensemble import RandomForestRegressor
         from sklearn.datasets import make_regression
