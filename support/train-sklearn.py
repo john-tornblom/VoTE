@@ -32,15 +32,10 @@ import numpy as np
 
 from sklearn.ensemble import RandomForestClassifier
 
+import vote
+
 
 logger = logging.getLogger('train-sklearn')
-
-
-def normalize(matrix):
-    for row in matrix:
-        row /= np.sum(row) or 1
-
-    return matrix
 
 
 def main():
@@ -75,40 +70,27 @@ def main():
     }
     logging.basicConfig(level=levels.get(opts.verbosity, logging.DEBUG))
 
-    forest = RandomForestClassifier(max_depth=opts.max_depth,
-                                    n_estimators=opts.nb_trees,
-                                    n_jobs=4,
-                                    random_state=12345)
-
     data = np.loadtxt(args[0], delimiter=',')
     features = data[:, :-1]
     labels = data[:,-1].astype('int')
+    nb_classes = len(set(labels))
 
-    forest.fit(features, labels)
-    
+
     logger.info('filename: %s', opts.output)
-    logger.info('nb_inputs: %d', forest.n_features_)
-    logger.info('nb_outputs: %d', forest.n_outputs_ * forest.n_classes_)
+    logger.info('nb_inputs: %d', features.shape[1])
+    logger.info('nb_outputs: %d', nb_classes)
     logger.info('train set: %d samples', len(features))
+    
+    m = RandomForestClassifier(max_depth=opts.max_depth,
+                               n_estimators=opts.nb_trees,
+                               n_jobs=4,
+                               random_state=12345)
 
-    tree_obj_list = list()
-    for tree in forest.estimators_:
-        tree_obj = dict()
-        tree_obj['nb_inputs'] = tree.n_features_
-        tree_obj['nb_outputs'] = tree.n_classes_ * tree.n_outputs_
-        tree_obj['left'] = tree.tree_.children_left.tolist()
-        tree_obj['right'] = tree.tree_.children_right.tolist()
-        tree_obj['feature'] = tree.tree_.feature.tolist()
-        tree_obj['threshold'] = tree.tree_.threshold.tolist()
-        tree_obj['value'] = normalize(np.squeeze(tree.tree_.value)).tolist()
-        tree_obj_list.append(tree_obj)
-
-    root_obj = dict(trees=tree_obj_list,
-                    post_process='divisor')
-
+    m.fit(features, labels)
     
     with open(opts.output, 'w') as f:
-        json.dump(root_obj, f)
+        e = vote.Ensemble.from_sklearn(m)
+        f.write(e.serialize())
         
 
 if __name__ == '__main__':

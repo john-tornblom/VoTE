@@ -18,6 +18,8 @@
 SCRIPTDIR="${BASH_SOURCE[0]}"
 SCRIPTDIR="$(dirname "${SCRIPTDIR}")"
 
+export PYTHONPATH=$SCRIPTDIR/../bindings/python
+
 RANGE_ARG=""
 for i in {1..784}; do
     RANGE_ARG="0 1 $RANGE_ARG"

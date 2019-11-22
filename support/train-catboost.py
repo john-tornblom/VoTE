@@ -32,56 +32,10 @@ import numpy as np
 
 from catboost import CatBoostClassifier
 
+import vote
+
 
 logger = logging.getLogger('train-catboost')
-
-
-def convert_catboost_json(filename):
-    with open(filename, 'r') as f:
-        cb = json.load(f)
-
-    multiclass_params = json.loads(cb['model_info']['multiclass_params'])
-    nb_inputs = len(cb['features_info']['float_features'])
-    nb_outputs = multiclass_params['classes_count']
-
-    tree_obj_list = list()
-    for tree in cb['oblivious_trees']:
-
-        tree_obj = dict()
-        tree_obj['nb_inputs'] = nb_inputs
-        tree_obj['nb_outputs'] = nb_outputs
-
-        nb_splits = len(tree['splits'])
-        depth = nb_splits + 1
-        nb_nodes = (2 ** depth) - 1
-        splits = list(reversed(tree['splits']))
-
-        tree_obj['left'] = [-1] * nb_nodes
-        tree_obj['right'] = [-1] * nb_nodes
-        tree_obj['feature'] = [-1] * nb_nodes
-        tree_obj['threshold'] = [None] * nb_nodes
-        tree_obj['value'] = [[None] * nb_outputs] * nb_nodes
-
-        tree_obj['left'][0:nb_nodes/2] = [ind for ind in range(2, nb_nodes, 2) if ind % 2 == 0]
-        tree_obj['right'][0:nb_nodes/2] = [ind for ind in range(1, nb_nodes, 2) if ind % 2 == 1]
-
-        for node_id in range(2 ** nb_splits - 1):
-            d = int(np.log2(node_id + 1))
-            tree_obj['feature'][node_id] = splits[d]['float_feature_index']
-            tree_obj['threshold'][node_id] = splits[d]['border']
-
-        queue = collections.deque(tree['leaf_values'])
-        for node_id in range(2 ** nb_splits - 1, nb_nodes):
-            values = [queue.pop() for _ in range(nb_outputs)]
-            tree_obj['value'][node_id] = list(reversed(values))
-                
-        tree_obj_list.append(tree_obj)
-
-    root_obj = dict(trees=tree_obj_list,
-                    post_process='softmax')
-    
-    with open(filename, 'w') as f:
-        json.dump(root_obj, f)
 
 
 def main():
@@ -141,8 +95,10 @@ def main():
 
     m.fit(features, labels)
 
-    m.save_model(opts.output, format='json')
-    convert_catboost_json(opts.output)
+    with open(opts.output, 'w') as f:
+        e = vote.Ensemble.from_catboost(m)
+        f.write(e.serialize())
+    
     
 
 if __name__ == '__main__':

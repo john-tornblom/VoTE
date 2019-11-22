@@ -18,6 +18,8 @@
 SCRIPTDIR="${BASH_SOURCE[0]}"
 SCRIPTDIR="$(dirname "${SCRIPTDIR}")"
 
+export PYTHONPATH=$SCRIPTDIR/../bindings/python
+
 #
 # Gradient Boosting
 #
