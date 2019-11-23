@@ -34,7 +34,7 @@ for params in {"5 25","5 50","5 75","10 25","10 50","10 75"}; do
     B=${params[1]}
 
     $SCRIPTDIR/train-catboost.py \
-	$SCRIPTDIR/data/mnist.train.csv \
+	$SCRIPTDIR/data/mnist.train.csv.gz \
 	-v \
 	-B $B \
 	-d $d \
@@ -67,7 +67,7 @@ for params in {"5 25","5 50","5 75","10 25","10 50","10 75"}; do
     B=${params[1]}
     
     $SCRIPTDIR/train-sklearn.py \
-	$SCRIPTDIR/data/mnist.train.csv \
+	$SCRIPTDIR/data/mnist.train.csv.gz \
 	-v \
 	-B $B \
 	-d $d \
@@ -98,14 +98,14 @@ echo "" > mnist.rf.d10.cardinality.log
 echo "" > mnist.gb.d10.cardinality.log
 for B in $(seq 1 4); do
     $SCRIPTDIR/train-sklearn.py \
-	$SCRIPTDIR/data/mnist.train.csv \
+	$SCRIPTDIR/data/mnist.train.csv.gz \
 	-v \
 	-B $B \
 	-d 10 \
 	-o mnist.rf.B${B}.d10.json || exit 1
 
     $SCRIPTDIR/train-catboost.py \
-	$SCRIPTDIR/data/mnist.train.csv \
+	$SCRIPTDIR/data/mnist.train.csv.gz \
 	-v \
 	-B $B \
 	-d 10 \
