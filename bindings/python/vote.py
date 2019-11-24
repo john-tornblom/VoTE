@@ -91,6 +91,15 @@ def mapping_check_argmin(mapping, expected):
     return _lib.vote_mapping_check_argmin(mapping, expected)
 
 
+def mapping_new(input_dim, output_dim):
+    '''
+    Create a new mapping with the given input/output dimensions. Input bounds
+    are initialized to [-∞, ∞], and output bounds are initialized to [0, 0].
+    '''
+    mapping = _lib.vote_mapping_new(int(input_dim), int(output_dim))
+    return _ffi.gc(mapping, _lib.vote_mapping_del)
+
+
 def mapping_copy(mapping):
     '''
     Create a (deep) copy of a mapping.
