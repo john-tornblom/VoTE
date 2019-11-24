@@ -85,6 +85,14 @@ int
 vote_mapping_argmax(const vote_mapping_t* m) {
   size_t k = 0;
 
+  // assume the output is probability in 0/1 classification
+  if(m->nb_outputs == 1) {
+    if((m->outputs[0].lower >= 0.5) == (m->outputs[0].upper >= 0.5)) {
+      return m->outputs[0].lower >= 0.5;
+    }
+    return -1;
+  }
+  
   // find class with largest upper bound
   for(size_t i=0; i<m->nb_outputs; i++) {
     if(m->outputs[i].upper > m->outputs[k].upper) {
@@ -108,6 +116,18 @@ vote_mapping_argmax(const vote_mapping_t* m) {
 vote_outcome_t
 vote_mapping_check_argmax(const vote_mapping_t* m, size_t expected) {
   size_t k = 1;
+
+  // assume the output is probability in 0/1 classification
+  if(m->nb_outputs == 1) {
+    if((m->outputs[0].lower >= 0.5) != (m->outputs[0].upper >= 0.5)) {
+      return VOTE_UNSURE;
+    }
+    if((m->outputs[0].lower >= 0.5) == expected) {
+      return VOTE_PASS;
+    }
+    return VOTE_FAIL;
+  }
+  
   assert(m->nb_outputs > expected);
   
   for(size_t i=0; i<m->nb_outputs; i++) {
@@ -131,6 +151,14 @@ int
 vote_mapping_argmin(const vote_mapping_t* m) {
   size_t k = 0;
 
+  // assume the output is probability in 0/1 classification
+  if(m->nb_outputs == 1) {
+    if((m->outputs[0].lower <= 0.5) == (m->outputs[0].upper <= 0.5)) {
+      return m->outputs[0].lower <= 0.5;
+    }
+    return -1;
+  }
+  
   // find class with smallest lower bound
   for(size_t i=0; i<m->nb_outputs; i++) {
     if(m->outputs[i].lower < m->outputs[k].lower) {
@@ -154,6 +182,18 @@ vote_mapping_argmin(const vote_mapping_t* m) {
 vote_outcome_t
 vote_mapping_check_argmin(const vote_mapping_t* m, size_t expected) {
   size_t k = 1;
+
+  // assume the output is probability in 0/1 classification
+  if(m->nb_outputs == 1) {
+    if((m->outputs[0].lower <= 0.5) != (m->outputs[0].upper <= 0.5)) {
+      return VOTE_UNSURE;
+    }
+    if((m->outputs[0].lower <= 0.5) == expected) {
+      return VOTE_PASS;
+    }
+    return VOTE_FAIL;
+  }
+  
   assert(m->nb_outputs > expected);
   
   for(size_t i=0; i<m->nb_outputs; i++) {
