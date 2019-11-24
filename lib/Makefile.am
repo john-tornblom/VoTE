@@ -16,7 +16,7 @@
 
 lib_LTLIBRARIES = libvote.la
 
-libvote_la_CFLAGS = -I../inc -I../ext -std=c99 -D_DEFAULT_SOURCE -Wextra \
+libvote_la_CFLAGS = -I../inc -I../ext -std=c99 -Wextra \
                     -Werror -pedantic -Wdouble-promotion -Wfloat-conversion \
                     -fPIC
 libvote_la_SOURCES = vote_mapping.c \
