@@ -31,5 +31,6 @@ libvote_la_SOURCES = vote_mapping.c \
                      vote_utils.c
 
 libvote_la_LIBADD = ../ext/libparson.la -lm
-libvote_la_LDFLAGS = -version-info 1:0:0
+libvote_la_LDFLAGS = -no-undefined -export-symbols-regex '^vote_' \
+                     -version-info 1:0:0
 
