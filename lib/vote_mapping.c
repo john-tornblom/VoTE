@@ -20,6 +20,7 @@ see <http://www.gnu.org/licenses/>.  */
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
+#include <limits.h>
 
 #include "vote.h"
 #include "vote_math.h"
@@ -98,7 +99,9 @@ vote_mapping_argmax(const vote_mapping_t* m) {
     }
   }
 
-  return k;
+  assert(k <= INT_MAX);
+  
+  return (int)k;
 }
 
 
@@ -142,7 +145,9 @@ vote_mapping_argmin(const vote_mapping_t* m) {
     }
   }
 
-  return k;
+  assert(k <= INT_MAX);
+  
+  return (int)k;
 }
 
 
