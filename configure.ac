@@ -48,7 +48,7 @@ AM_PATH_PYTHON([2.7],, [:])
 AX_PYTHON_MODULE([cffi])
 AM_CONDITIONAL([HAVE_PYMOD_CFFI], [test "$HAVE_PYMOD_CFFI" = yes])
 
-LT_INIT
+LT_INIT([win32-dll])
 
 AC_OUTPUT(Makefile ext/Makefile lib/Makefile inc/Makefile src/Makefile
           examples/Makefile bindings/python/Makefile)
