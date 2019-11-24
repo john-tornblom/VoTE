@@ -146,19 +146,6 @@ vote_mapping_argmin(const vote_mapping_t* m) {
 }
 
 
-bool
-vote_mapping_precise(const vote_mapping_t* m) {
-
-  for(size_t i=0; i<m->nb_outputs; i++) {
-    if(m->outputs[i].lower != m->outputs[i].upper) {
-      return false;
-    }
-  }
-
-  return true;
-}
-
-
 vote_outcome_t
 vote_mapping_check_argmin(const vote_mapping_t* m, size_t expected) {
   size_t k = 1;
@@ -179,3 +166,16 @@ vote_mapping_check_argmin(const vote_mapping_t* m, size_t expected) {
   
   return VOTE_UNSURE;
 }
+
+
+bool
+vote_mapping_precise(const vote_mapping_t* m) {
+  for(size_t i=0; i<m->nb_outputs; i++) {
+    if(m->outputs[i].lower != m->outputs[i].upper) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
