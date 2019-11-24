@@ -104,7 +104,6 @@ vote_tree_parse(struct json_value_t *root) {
   struct json_object_t *obj;
   struct json_array_t *array;
   size_t length;
-  double d;
   
   vote_tree_t* tree = calloc(1, sizeof(vote_tree_t));
   assert(tree);
@@ -155,8 +154,8 @@ vote_tree_encode(const vote_tree_t* t) {
   struct json_value_t* value = json_value_init_array();
   struct json_array_t* array = json_value_get_array(value);
   
-  json_object_set_number(obj, "nb_inputs", t->nb_inputs);
-  json_object_set_number(obj, "nb_outputs", t->nb_outputs);
+  json_object_set_number(obj, "nb_inputs", (double)t->nb_inputs);
+  json_object_set_number(obj, "nb_outputs", (double)t->nb_outputs);
 
   json_object_set_value(obj, "left", vote_encode_ints(t->left, t->nb_nodes));
   json_object_set_value(obj, "right", vote_encode_ints(t->right, t->nb_nodes));
