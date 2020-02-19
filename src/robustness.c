@@ -38,8 +38,7 @@ is_correct(void *ctx, vote_mapping_t *m) {
  * Parse command line arguments and launch program.
  **/
 int main(int argc, char** argv) {
-  real_t *data;
-  size_t nb_rows, nb_cols;
+  vote_dataset_t  *ds;
   real_t score = 0;
   vote_ensemble_t* e;
   real_t threshold;
@@ -53,13 +52,13 @@ int main(int argc, char** argv) {
     printf("Unable to load model from %s\n", argv[1]);
     exit(1);
   }
-  
-  if(!vote_csv_load(argv[2], &data, &nb_rows, &nb_cols)) {
+
+  if(!(ds = vote_csv_load(argv[2]))) {
     printf("Unable to load data from %s\n", argv[2]);
     exit(1);
   }
-  
-  if(nb_cols != e->nb_inputs + 1) {
+
+  if(ds->nb_cols != e->nb_inputs + 1) {
     printf("Unexpected number of columns in %s\n", argv[2]);
     exit(1);
   }
@@ -71,18 +70,18 @@ int main(int argc, char** argv) {
   printf("robustness:nb_outputs: %ld\n", e->nb_outputs);
   printf("robustness:nb_trees:   %ld\n", e->nb_trees);
   printf("robustness:nb_nodes:   %ld\n", e->nb_nodes);
-  printf("robustness:nb_samples: %ld\n", nb_rows);
+  printf("robustness:nb_samples: %ld\n", ds->nb_rows);
   printf("robustness:threshold:  %f\n", threshold);
 
   time_t start_time = time(NULL);
   time_t max_sample_time = 0;
-  
-  for(size_t row=0; row<nb_rows; row++) {
-    fprintf(stderr, "robustness:progress:   %ld/%ld", row+1, nb_rows);
+
+  for(size_t row=0; row<ds->nb_rows; row++) {
+    fprintf(stderr, "robustness:progress:   %ld/%ld", row+1, ds->nb_rows);
     fflush(stderr);
     fprintf(stderr, "\r");
     
-    real_t *sample = &data[row * nb_cols];
+    real_t *sample = vote_dataset_row(ds, row);
     vote_bound_t bounds[e->nb_inputs];
 
     for(size_t i=0; i<e->nb_inputs; i++) {
@@ -115,9 +114,9 @@ int main(int argc, char** argv) {
   }
   
   vote_ensemble_del(e);
-  free(data);
+  vote_dataset_del(ds);
 
-  printf("robustness:score:      %f\n", score/nb_rows);
+  printf("robustness:score:      %f\n", score/ds->nb_rows);
   printf("robustness:runtime:    %lds\n", time(NULL) - start_time);
   printf("robustness:maxtime:    %lds\n", max_sample_time);
   

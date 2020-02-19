@@ -25,9 +25,8 @@ along with this program; see the file COPYING. If not, see
  * Print the accuracy of a model for a set of samples to stdout.
  **/
 int main(int argc, char** argv) {
-  real_t *data;
-  size_t nb_rows, nb_cols;
   vote_ensemble_t* e;
+  vote_dataset_t* ds;
   real_t score = 0;
   
   if(argc < 3) {
@@ -40,12 +39,12 @@ int main(int argc, char** argv) {
     exit(1);
   }
   
-  if(!vote_csv_load(argv[2], &data, &nb_rows, &nb_cols)) {
+  if(!(ds = vote_csv_load(argv[2]))) {
     printf("Unable to load data from %s\n", argv[2]);
     exit(1);
   }
   
-  if(nb_cols != e->nb_inputs + 1) {
+  if(ds->nb_cols != e->nb_inputs + 1) {
     printf("Unexpected number of columns in %s\n", argv[2]);
     exit(1);
   }
@@ -55,14 +54,14 @@ int main(int argc, char** argv) {
   printf("accuracy:nb_outputs: %ld\n", e->nb_outputs);
   printf("accuracy:nb_trees:   %ld\n", e->nb_trees);
   printf("accuracy:nb_nodes:   %ld\n", e->nb_nodes);
-  printf("accuracy:nb_samples: %ld\n", nb_rows);
+  printf("accuracy:nb_samples: %ld\n", ds->nb_rows);
   
-  for(size_t row=0; row<nb_rows; row++) {
-    real_t *sample = &data[row * nb_cols];
+  for(size_t row=0; row<ds->nb_rows; row++) {
+    real_t *sample = vote_dataset_row(ds, row);
     real_t prob[e->nb_outputs];
     
     memset(prob, 0, sizeof(prob));
-    vote_ensemble_eval(e, &data[row * nb_cols], prob);
+    vote_ensemble_eval(e, sample, prob);
     
     size_t pred = vote_argmax(prob, e->nb_outputs);
     size_t label = sample[e->nb_inputs];
@@ -70,9 +69,9 @@ int main(int argc, char** argv) {
   }
     
   vote_ensemble_del(e);
-  free(data);
+  vote_dataset_del(ds);
   
-  printf("accuracy:score:      %f\n", score/nb_rows);
+  printf("accuracy:score:      %f\n", score/ds->nb_rows);
 
   return 0;
 }

@@ -410,14 +410,15 @@ vote_csv_count_numbers(void *ctx, csv_token_t token, const char* value) {
 }
 
 
-bool
-vote_csv_load(const char* filename, real_t **data, size_t *rows, size_t *cols) {
+vote_dataset_t*
+vote_csv_load(const char* filename) {
   csv_parser_t p;
+  vote_dataset_t* ds;
   size_t length = 0;
   
   csv_tokenize_file(vote_csv_count_numbers, &length, filename);
   if(!length) {
-    return false;
+    return NULL;
   }
   
   p.memory    = calloc(length, sizeof(real_t));
@@ -427,12 +428,37 @@ vote_csv_load(const char* filename, real_t **data, size_t *rows, size_t *cols) {
   p.width     = 0;
   p.height    = 0;
 
+  assert(p.memory);
+  
   csv_tokenize_file(csv_parser_on_token, &p, filename);
+
   assert(p.length == p.width * p.height);
+
+  ds = calloc(1, sizeof(vote_dataset_t));
+  assert(ds);
+
+  ds->data     = p.memory;
+  ds->nb_cols  = p.width;
+  ds->nb_rows  = p.height;
+  ds->filename = calloc(strlen(filename) + 1, sizeof(char));
+  assert(ds->filename);
+  strcpy(ds->filename, filename);
   
-  *data = p.memory;
-  *cols = p.width;
-  *rows = p.height;
-  
-  return true;
+  return ds;
 }
+
+
+vote_dataset_t*
+vote_dataset_del(vote_dataset_t* ds) {
+  free(ds->filename);
+  free(ds->data);
+  free(ds);
+}
+
+
+real_t*
+vote_dataset_row(vote_dataset_t* ds, size_t index) {
+  return &ds->data[index * ds->nb_cols];
+}
+
+

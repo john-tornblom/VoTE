@@ -103,6 +103,17 @@ typedef enum vote_outcome {
 
 
 /**
+ * A dataset in the form of a matrix of reals.
+ **/
+typedef struct vote_dataset {
+  char   *filename;
+  size_t  nb_rows;
+  size_t  nb_cols;
+  real_t *data;
+} vote_dataset_t;
+
+
+/**
  * Callback function prototype used to iterate input/output mappings.
  * Returning a conclusive outcome (pass/fail) stops the iterations.
  **/
@@ -132,8 +143,19 @@ size_t vote_argmin(const real_t* fvec, size_t length);
  *
  * A correctly formatted CSV file (using the comma delimiter) is assumed.
  **/
-bool vote_csv_load(const char* filename, real_t **data,
-		   size_t *nb_rows, size_t *nb_cols);
+vote_dataset_t* vote_csv_load(const char* filename);
+
+
+/**
+ * Delete a dataset and free associated resources.
+ **/
+vote_dataset_t* vote_dataset_del(vote_dataset_t* ds);
+
+
+/**
+ * Get the row at a particular index in a dataset.
+ **/
+real_t* vote_dataset_row(vote_dataset_t* ds, size_t index);
 
 
 /**

@@ -134,10 +134,9 @@ is_correct(void *ctx, vote_mapping_t *m) {
  * Parse command line arguments and launch program.
  **/
 int main(int argc, char** argv) {
-  real_t *data;
-  size_t nb_rows, nb_cols;
   real_t score = 0;
   vote_ensemble_t* e;
+  vote_dataset_t  *ds;
   size_t threshold;
   size_t window;
   
@@ -151,12 +150,12 @@ int main(int argc, char** argv) {
     exit(1);
   }
   
-  if(!vote_csv_load(argv[2], &data, &nb_rows, &nb_cols)) {
+  if(!(ds = vote_csv_load(argv[2]))) {
     printf("Unable to load data from %s\n", argv[2]);
     exit(1);
   }
   
-  if(nb_cols != e->nb_inputs + 1) {
+  if(ds->nb_cols != e->nb_inputs + 1) {
     printf("Unexpected number of columns in %s\n", argv[2]);
     exit(1);
   }
@@ -169,19 +168,19 @@ int main(int argc, char** argv) {
   printf("mnist:nb_outputs: %ld\n", e->nb_outputs);
   printf("mnist:nb_trees:   %ld\n", e->nb_trees);
   printf("mnist:nb_nodes:   %ld\n", e->nb_nodes);
-  printf("mnist:nb_samples: %ld\n", nb_rows);
+  printf("mnist:nb_samples: %ld\n", ds->nb_rows);
   printf("mnist:window:     %ld\n", window);
   printf("mnist:threshold:  %ld\n", threshold);
   
   time_t t = time(NULL);
-  for(size_t row=0; row<nb_rows; row++) {
-    real_t *sample = &data[row * nb_cols];
+  for(size_t row=0; row<ds->nb_rows; row++) {
+    real_t *sample = vote_dataset_row(ds, row);
     real_t pred[e->nb_outputs];
     image_t* img = (image_t*)sample;
     int label = (int)sample[e->nb_inputs];
     bool res = true;
 
-    fprintf(stderr, "mnist:progress:   %ld/%ld", row, nb_rows);
+    fprintf(stderr, "mnist:progress:   %ld/%ld", row, ds->nb_rows);
     fflush(stderr);
     fprintf(stderr, "\r");
 
@@ -220,9 +219,9 @@ int main(int argc, char** argv) {
   }
   
   vote_ensemble_del(e);
-  free(data);
+  vote_dataset_del(ds);
 
-  printf("mnist:score:      %f\n", score/nb_rows);
+  printf("mnist:score:      %f\n", score/ds->nb_rows);
   printf("mnist:runtime:    %lds\n", time(NULL) - t);
   
   return 0;
