@@ -26,7 +26,7 @@ libvote_la_SOURCES = vote_mapping.c \
                      vote_refinary.c \
                      vote_abstract.c \
                      vote_postproc.c \
-                     vote_csv.c \
+                     vote_dataset.c \
                      vote_xgboost.c \
                      vote_utils.c
 

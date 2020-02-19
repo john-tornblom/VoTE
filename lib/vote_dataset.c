@@ -363,24 +363,21 @@ csv_parser_on_token(void *ctx, csv_token_t token, const char* value) {
     break;
 
   case TOK_DELIMITER:
-    //determine width from first row
-    if(!p->height) {
-      p->width++;
-    }
     p->curr_col++;
     break;
 
   case TOK_EOF:
   case TOK_LINEBREAK:
-    //determine width from first row
-    if(!p->height) {
-      p->width++;
-    }
 
     //number rows with numbers --> height
     if(p->curr_col) {
+      //determine width from first row with numbers
+      if(!p->height) {
+	p->width = p->curr_col + 1;
+      }
       p->height++;
     }
+
     p->curr_col = 0;
     break;
     
