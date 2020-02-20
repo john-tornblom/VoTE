@@ -51,9 +51,9 @@ for params in {"5 25","5 50","5 75","10 25","10 50","10 75"}; do
 #	>> mnist.gb.B${B}.d${d}.log || exit 1
 	
     $SCRIPTDIR/../src/vote_robustness \
-	mnist.gb.B${B}.d${d}.json \
+	--model mnist.gb.B${B}.d${d}.json \
+	--margin 1 \
 	$SCRIPTDIR/data/mnist.test.csv \
-	1 \
 	>> mnist.gb.B${B}.d${d}.log || exit 1
 done
 
@@ -84,9 +84,9 @@ for params in {"5 25","5 50","5 75","10 25","10 50","10 75"}; do
 	>> mnist.rf.B${B}.d${d}.log || exit 1
 	
     $SCRIPTDIR/../src/vote_robustness \
-	mnist.rf.B${B}.d${d}.json \
+	--model mnist.rf.B${B}.d${d}.json \
+	--margin 1 \
 	$SCRIPTDIR/data/mnist.test.csv \
-	1 \
 	>> mnist.rf.B${B}.d${d}.log || exit 1
 done
 

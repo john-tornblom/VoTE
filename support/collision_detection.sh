@@ -51,9 +51,9 @@ for params in {"5 20","5 25","10 20","10 25","15 20","15 25"}; do
 	>> collision_detection.gb.B${B}.d${d}.log || exit 1
 	
     $SCRIPTDIR/../src/vote_robustness \
-	collision_detection.gb.B${B}.d${d}.json \
+	--model collision_detection.gb.B${B}.d${d}.json \
+	--margin 0.05 \
 	$SCRIPTDIR/data/collision_detection.test.csv \
-	0.05 \
 	>> collision_detection.gb.B${B}.d${d}.log || exit 1
 done
 
@@ -90,12 +90,11 @@ for params in {"10 20","10 25","15 20","15 25","20 20","20 25"}; do
 	>> collision_detection.rf.B${B}.d${d}.log || exit 1
 	
     $SCRIPTDIR/../src/vote_robustness \
-	collision_detection.rf.B${B}.d${d}.json \
+	--model collision_detection.rf.B${B}.d${d}.json \
+	--margin 0.05 \
 	$SCRIPTDIR/data/collision_detection.test.csv \
-	0.05 \
 	>> collision_detection.rf.B${B}.d${d}.log || exit 1
 done
-
 
 #
 # Scalability
