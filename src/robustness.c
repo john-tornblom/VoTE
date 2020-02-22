@@ -175,7 +175,7 @@ main(int argc, char** argv) {
      .doc="Path to a serialized tree-based classifier"},
 
     {.name="margin", .key='M', .arg="NUMBER",
-     .doc="The addative margin to which the classifier should be robust against"},
+     .doc="The additive margin to which the classifier should be robust against"},
 
     {.name="output", .key='o', .arg="PATH",
      .doc="Output counter examples in the CSV format to PATH"},
