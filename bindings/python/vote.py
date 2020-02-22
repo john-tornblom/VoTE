@@ -228,7 +228,7 @@ def _catboost_gb_to_dict(inst):
         for node_id in range(2 ** nb_splits - 1):
             d = int(np.log2(node_id + 1))
             tree_obj['feature'][node_id] = splits[d]['float_feature_index']
-            tree_obj['threshold'][node_id] = splits[d]['border']
+            tree_obj['threshold'][node_id] = np.float32(splits[d]['border'])
 
         queue = collections.deque(tree['leaf_values'])
         for node_id in range(2 ** nb_splits - 1, nb_nodes):
@@ -247,7 +247,9 @@ class _NumPyJSONEncoder(json.JSONEncoder):
         
         if issubclass(ty, np.ndarray):
             return obj.tolist()
-        elif issubclass(ty, np.float):
+        elif issubclass(ty, np.float64):
+            return float(obj)
+        elif issubclass(ty, np.float32):
             return float(obj)
         elif issubclass(ty, np.integer):
             return int(obj)
