@@ -29,21 +29,24 @@ typedef struct robustness_analysis {
   //user inputs
   vote_ensemble_t *ensemble;
   FILE            *output;
-  size_t           timeout;
+  real_t           timeout;
   real_t           margin;
   vote_dataset_t  *dataset;
   
   // intermediate data
   struct {
-    time_t timer;
-    size_t label;
+    clock_t start_clock;
+    size_t  label;
   } current_sample;
   
   //analysis outputs
   size_t nb_passed;
   size_t nb_timeouts;
-  time_t runtime;
+  real_t runtime;
 } robustness_analysis_t;
+
+
+#define TIME_SINCE(clk) ((real_t)(clock() - clk) / CLOCKS_PER_SEC)
 
 
 /**
@@ -54,7 +57,7 @@ is_correct(void *ctx, vote_mapping_t *m) {
   vote_outcome_t o;
   robustness_analysis_t *a = (robustness_analysis_t*)ctx;
 
-  if(time(NULL) > a->current_sample.timer) {
+  if(TIME_SINCE(a->current_sample.start_clock) > a->timeout) {
     a->nb_timeouts++;
     return VOTE_FAIL;
   }
@@ -84,8 +87,8 @@ analyze_robustness(robustness_analysis_t *a) {
   
   assert(a->dataset->nb_cols == e->nb_inputs + 1);
 
-  a->runtime = time(NULL);
   for(size_t row=0; row<a->dataset->nb_rows; row++) {
+    clock_t start_clock = clock();
     real_t *sample = vote_dataset_row(a->dataset, row);
     vote_bound_t bounds[e->nb_inputs];
     for(size_t i=0; i<e->nb_inputs; i++) {
@@ -94,7 +97,7 @@ analyze_robustness(robustness_analysis_t *a) {
     }
 
     a->current_sample.label = (size_t)roundf(sample[e->nb_inputs]);
-    a->current_sample.timer = time(NULL) + a->timeout;
+    a->current_sample.start_clock = clock();
 
     // don't bother with samples that are classified incorrectly
     if(!vote_ensemble_absref(e, bounds, is_correct, a)) {
@@ -107,10 +110,12 @@ analyze_robustness(robustness_analysis_t *a) {
       bounds[i].upper += a->margin;
     }
 
-    a->nb_passed += vote_ensemble_absref(e, bounds, is_correct, a);
-  }
+    bool pass = vote_ensemble_absref(e, bounds, is_correct, a);
+    a->nb_passed += pass;
 
-  a->runtime = time(NULL) - a->runtime;
+    real_t elapsed_time = TIME_SINCE(start_clock);
+    a->runtime += elapsed_time; 
+
 }
 
 
