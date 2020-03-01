@@ -78,6 +78,12 @@ is_correct(void *ctx, vote_mapping_t *m) {
 }
 
 
+static void
+log_outcome(robustness_analysis_t *a, size_t id, vote_outcome_t o) {
+  printf("%ld,%g,%d\n", id, TIME_SINCE(a->current_sample.start_clock), o);
+}
+
+
 /**
  * Run the robustness analysis.
  **/
@@ -87,6 +93,8 @@ analyze_robustness(robustness_analysis_t *a) {
   
   assert(a->dataset->nb_cols == e->nb_inputs + 1);
 
+  printf("# id,elapsed_time,outcome\n");
+  
   for(size_t row=0; row<a->dataset->nb_rows; row++) {
     clock_t start_clock = clock();
     real_t *sample = vote_dataset_row(a->dataset, row);
@@ -101,6 +109,7 @@ analyze_robustness(robustness_analysis_t *a) {
 
     // don't bother with samples that are classified incorrectly
     if(!vote_ensemble_absref(e, bounds, is_correct, a)) {
+      log_outcome(a, row, VOTE_FAIL);
       continue;
     }
 
@@ -116,6 +125,13 @@ analyze_robustness(robustness_analysis_t *a) {
     real_t elapsed_time = TIME_SINCE(start_clock);
     a->runtime += elapsed_time; 
 
+    vote_outcome_t o = pass ? VOTE_PASS : VOTE_FAIL;
+    if(elapsed_time > a->timeout) {
+      o = VOTE_UNSURE;
+    }
+    
+    log_outcome(a, row, o);
+  }
 }
 
 
