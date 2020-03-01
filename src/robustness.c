@@ -22,31 +22,61 @@ along with this program; see the file COPYING. If not, see
 #include <assert.h>
 #include <time.h>
 #include <argp.h>
+#include <time.h>
+#include <unistd.h>
 #include <vote.h>
 
+#include "workqueue.h"
 
+
+/**
+ *
+ **/
+typedef struct sample_analysis {
+  vote_ensemble_t *ensemble;
+  real_t           margin;
+  real_t           timeout;
+  real_t          *sample;
+  size_t           label;
+
+  struct timespec start_clock;
+  struct timespec stop_clock;
+
+  vote_outcome_t   outcome;
+} sample_analysis_t;
+
+
+/**
+ *
+ **/
 typedef struct robustness_analysis {
-  //user inputs
   vote_ensemble_t *ensemble;
   FILE            *output;
-  real_t           timeout;
+  real_t           sample_timeout;
   real_t           margin;
+  size_t           threads;
   vote_dataset_t  *dataset;
-  
-  // intermediate data
-  struct {
-    clock_t start_clock;
-    size_t  label;
-  } current_sample;
-  
-  //analysis outputs
-  size_t nb_passed;
-  size_t nb_timeouts;
-  real_t runtime;
 } robustness_analysis_t;
 
 
-#define TIME_SINCE(clk) ((real_t)(clock() - clk) / CLOCKS_PER_SEC)
+/**
+ * Calculate the time difference in seconds.
+ **/
+static real_t
+timespec_diff(struct timespec *start, struct timespec *stop) {
+  real_t sec = 0;
+  real_t nsec = 0;
+
+  if((stop->tv_nsec - start->tv_nsec) < 0) {
+    sec = (real_t)stop->tv_sec - start->tv_sec - 1;
+    nsec = (real_t)stop->tv_nsec - start->tv_nsec + 1000000000;
+  } else {
+    sec = (real_t)stop->tv_sec - start->tv_sec;
+    nsec = (real_t)stop->tv_nsec - start->tv_nsec;
+  }
+  
+  return sec + (nsec / 1e9);
+}
 
 
 /**
@@ -54,33 +84,47 @@ typedef struct robustness_analysis {
  **/
 static vote_outcome_t
 is_correct(void *ctx, vote_mapping_t *m) {
-  vote_outcome_t o;
-  robustness_analysis_t *a = (robustness_analysis_t*)ctx;
-
-  if(TIME_SINCE(a->current_sample.start_clock) > a->timeout) {
-    a->nb_timeouts++;
+  struct timespec curr_clock;
+  sample_analysis_t *a = (sample_analysis_t*)ctx;
+  
+  clock_gettime(CLOCK_THREAD_CPUTIME_ID, &curr_clock);
+  
+  if(timespec_diff(&a->start_clock, &curr_clock) > a->timeout) {
+    a->outcome = VOTE_UNSURE;
     return VOTE_FAIL;
   }
 
-  o = vote_mapping_check_argmax(m, a->current_sample.label);
-  
-  // serialize a counter-example
-  if(o == VOTE_FAIL && a->output) {
-    for(size_t i=0; i<m->nb_inputs; i++) {
-      fprintf(a->output, "%1.17g,", m->inputs[i].lower +
-	      (m->inputs[i].upper - m->inputs[i].lower) / 2);
-    }
-    fprintf(a->output, "%ld # predicted(%d)\n",
-	    a->current_sample.label, vote_mapping_argmax(m));
-  }
-  
-  return o;
+  a->outcome = vote_mapping_check_argmax(m, a->label);
+
+  return a->outcome;
 }
 
 
+/**
+ * Analyze a given sample on a seperate thread.
+ **/
 static void
-log_outcome(robustness_analysis_t *a, size_t id, vote_outcome_t o) {
-  printf("%ld,%g,%d\n", id, TIME_SINCE(a->current_sample.start_clock), o);
+analyze_sample(void* ctx) {
+  sample_analysis_t *a = (sample_analysis_t*)ctx;
+  vote_bound_t bounds[a->ensemble->nb_inputs];
+
+  clock_gettime(CLOCK_THREAD_CPUTIME_ID, &a->start_clock);
+  
+  for(size_t i=0; i<a->ensemble->nb_inputs; i++) {
+    bounds[i].lower = a->sample[i];
+    bounds[i].upper = a->sample[i];
+  }
+
+  // don't bother with samples that are classified incorrectly
+  if(vote_ensemble_absref(a->ensemble, bounds, is_correct, a)) {
+    for(size_t i=0; i<a->ensemble->nb_inputs; i++) {
+      bounds[i].lower -= a->margin;
+      bounds[i].upper += a->margin;
+    }
+    vote_ensemble_absref(a->ensemble, bounds, is_correct, a);
+  }
+
+  clock_gettime(CLOCK_THREAD_CPUTIME_ID, &a->stop_clock);
 }
 
 
@@ -89,49 +133,59 @@ log_outcome(robustness_analysis_t *a, size_t id, vote_outcome_t o) {
  **/
 static void
 analyze_robustness(robustness_analysis_t *a) {
-  vote_ensemble_t *e = a->ensemble;
+  size_t nb_samples = a->dataset->nb_rows;
+  sample_analysis_t analyses[nb_samples];
+  workqueue_t *wq = workqueue_new();
+  struct timespec start_clock;
+  struct timespec stop_clock;
   
-  assert(a->dataset->nb_cols == e->nb_inputs + 1);
-
-  printf("# id,elapsed_time,outcome\n");
-  
-  for(size_t row=0; row<a->dataset->nb_rows; row++) {
-    clock_t start_clock = clock();
-    real_t *sample = vote_dataset_row(a->dataset, row);
-    vote_bound_t bounds[e->nb_inputs];
-    for(size_t i=0; i<e->nb_inputs; i++) {
-      bounds[i].lower = sample[i];
-      bounds[i].upper = sample[i];
-    }
-
-    a->current_sample.label = (size_t)roundf(sample[e->nb_inputs]);
-    a->current_sample.start_clock = clock();
-
-    // don't bother with samples that are classified incorrectly
-    if(!vote_ensemble_absref(e, bounds, is_correct, a)) {
-      log_outcome(a, row, VOTE_FAIL);
-      continue;
-    }
-
-    //apply perturbation to input
-    for(size_t i=0; i<e->nb_inputs; i++) {
-      bounds[i].lower -= a->margin;
-      bounds[i].upper += a->margin;
-    }
-
-    bool pass = vote_ensemble_absref(e, bounds, is_correct, a);
-    a->nb_passed += pass;
-
-    real_t elapsed_time = TIME_SINCE(start_clock);
-    a->runtime += elapsed_time; 
-
-    vote_outcome_t o = pass ? VOTE_PASS : VOTE_FAIL;
-    if(elapsed_time > a->timeout) {
-      o = VOTE_UNSURE;
-    }
+  for(size_t row=0; row<nb_samples; row++) {
+    analyses[row].ensemble = a->ensemble;
+    analyses[row].margin = a->margin;
+    analyses[row].timeout = a->sample_timeout;
     
-    log_outcome(a, row, o);
+    analyses[row].sample = vote_dataset_row(a->dataset, row);
+    analyses[row].label = (size_t)roundf(analyses[row].sample[a->ensemble->nb_inputs]);
+
+    workqueue_schedule(wq, analyze_sample, &analyses[row]);
   }
+
+  clock_gettime(CLOCK_REALTIME, &start_clock);
+  workqueue_launch(wq, a->threads);
+  clock_gettime(CLOCK_REALTIME, &stop_clock);
+
+  real_t walltime = timespec_diff(&start_clock, &stop_clock);
+  size_t passed = 0;
+  size_t timeouts = 0;
+  
+  printf("# id,elapsed_time,outcome\n");
+  for(size_t row=0; row<nb_samples; row++) {
+    passed += analyses[row].outcome == VOTE_PASS;
+    timeouts += analyses[row].outcome == VOTE_UNSURE;
+    printf("%ld,%g,%d\n", row, timespec_diff(&analyses[row].start_clock,
+					     &analyses[row].stop_clock),
+	   analyses[row].outcome);
+  }
+  
+  printf("# dataset:    %s\n", a->dataset->filename);
+  printf("# margin:     %g\n", a->margin);
+  printf("# timeout:    %gs\n", a->sample_timeout);
+  printf("# nb_inputs:  %ld\n", a->ensemble->nb_inputs);
+  printf("# nb_outputs: %ld\n", a->ensemble->nb_outputs);
+  printf("# nb_trees:   %ld\n", a->ensemble->nb_trees);
+  printf("# nb_nodes:   %ld\n", a->ensemble->nb_nodes);
+  printf("# passed:     %ld\n", passed);
+  printf("# timeouts:   %ld\n", timeouts);
+
+  if(timeouts) {
+    printf("# score:      [%g,%g]\n", (real_t)passed / nb_samples,
+	   (real_t)(passed + timeouts) / nb_samples);
+  } else {
+    printf("# score:      %g\n", (real_t)passed / nb_samples);
+  }
+  printf("# walltime:   %gs\n", walltime);
+
+  workqueue_del(wq);
 }
 
 
@@ -162,7 +216,11 @@ parse_cb(int key, char *arg, struct argp_state *state) {
     break;
 
   case 'T': //timeout
-    a->timeout = atof(arg);
+    a->sample_timeout = atof(arg);
+    break;
+
+  case 't': //threads
+    a->threads = atoi(arg);
     break;
     
   case ARGP_KEY_ARG: //CSV_FILE
@@ -201,6 +259,9 @@ main(int argc, char** argv) {
     {.name="output", .key='o', .arg="PATH",
      .doc="Output counter examples in the CSV format to PATH"},
 
+    {.name="threads", .key='t', .arg="NUMBER",
+     .doc="Perform analyses concurrently on a given NUMBER of threads"},
+    
     {.name="timeout", .key='T', .arg="NUMBER",
      .doc="Timeout the analysis of a sample after NUMBER seconds"},
 
@@ -216,34 +277,16 @@ main(int argc, char** argv) {
   };
 
   struct robustness_analysis a = {
-    .timeout = UINT_MAX
+    .sample_timeout = UINT_MAX,
+    .threads = sysconf(_SC_NPROCESSORS_ONLN)
   };
     
   if(argp_parse(&argp, argc, argv, 0, 0, &a)) {
     exit(1);
   }
 
-  printf("# dataset:    %s\n", a.dataset->filename);
-  printf("# margin:     %g\n", a.margin);
-  printf("# timeout:    %gs\n", a.timeout);
-  printf("# nb_inputs:  %ld\n", a.ensemble->nb_inputs);
-  printf("# nb_outputs: %ld\n", a.ensemble->nb_outputs);
-  printf("# nb_trees:   %ld\n", a.ensemble->nb_trees);
-  printf("# nb_nodes:   %ld\n", a.ensemble->nb_nodes);
-  printf("# \n");
-  
   analyze_robustness(&a);
-
-  printf("# passed:     %ld\n", a.nb_passed);
-  printf("# timeouts:   %ld\n", a.nb_timeouts);
-  if(a.nb_timeouts) {
-    printf("# score:      [%g,%g]\n", (real_t)a.nb_passed / a.dataset->nb_rows,
-	   (real_t)(a.nb_passed + a.nb_timeouts) / a.dataset->nb_rows);
-  } else {
-    printf("# score:      %g\n", (real_t)a.nb_passed / a.dataset->nb_rows);
-  }
-  printf("# runtime:    %gs\n", a.runtime);
-
+  
   if(a.output) {
     fclose(a.output);
   }

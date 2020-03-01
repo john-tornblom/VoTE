@@ -43,9 +43,9 @@ vote_iospace_SOURCES = iospace.c
 vote_iospace_CFLAGS = -std=c99 -I../inc
 vote_iospace_LDADD = ../lib/libvote.la -lm
 
-vote_robustness_SOURCES = robustness.c
-vote_robustness_CFLAGS = -std=c99 -I../inc
-vote_robustness_LDADD = ../lib/libvote.la -lm
+vote_robustness_SOURCES = robustness.c workqueue.c
+vote_robustness_CFLAGS = -std=gnu99 -I../inc
+vote_robustness_LDADD = ../lib/libvote.la -lm -lpthread
 
 vote_range_SOURCES = range.c
 vote_range_CFLAGS = -std=c99 -I../inc
