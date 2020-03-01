@@ -223,24 +223,26 @@ main(int argc, char** argv) {
     exit(1);
   }
 
-  printf("robustness:nb_inputs:  %ld\n", a.ensemble->nb_inputs);
-  printf("robustness:nb_outputs: %ld\n", a.ensemble->nb_outputs);
-  printf("robustness:nb_trees:   %ld\n", a.ensemble->nb_trees);
-  printf("robustness:nb_nodes:   %ld\n", a.ensemble->nb_nodes);
-  printf("robustness:margin:     %f\n",  a.margin);
-  printf("robustness:nb_samples: %ld\n", a.dataset->nb_rows);
+  printf("# dataset:    %s\n", a.dataset->filename);
+  printf("# margin:     %g\n", a.margin);
+  printf("# timeout:    %gs\n", a.timeout);
+  printf("# nb_inputs:  %ld\n", a.ensemble->nb_inputs);
+  printf("# nb_outputs: %ld\n", a.ensemble->nb_outputs);
+  printf("# nb_trees:   %ld\n", a.ensemble->nb_trees);
+  printf("# nb_nodes:   %ld\n", a.ensemble->nb_nodes);
+  printf("# \n");
   
   analyze_robustness(&a);
 
-  printf("robustness:passed:     %ld\n", a.nb_passed);
-  printf("robustness:timeouts:   %ld\n", a.nb_timeouts);
+  printf("# passed:     %ld\n", a.nb_passed);
+  printf("# timeouts:   %ld\n", a.nb_timeouts);
   if(a.nb_timeouts) {
-    printf("robustness:score:      [%f,%f]\n", (real_t)a.nb_passed / a.dataset->nb_rows,
+    printf("# score:      [%g,%g]\n", (real_t)a.nb_passed / a.dataset->nb_rows,
 	   (real_t)(a.nb_passed + a.nb_timeouts) / a.dataset->nb_rows);
   } else {
-    printf("robustness:score:      %f\n", (real_t)a.nb_passed / a.dataset->nb_rows);
+    printf("# score:      %g\n", (real_t)a.nb_passed / a.dataset->nb_rows);
   }
-  printf("robustness:runtime:    %lds\n", a.runtime);
+  printf("# runtime:    %gs\n", a.runtime);
 
   if(a.output) {
     fclose(a.output);
