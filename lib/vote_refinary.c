@@ -133,14 +133,20 @@ vote_refinery_decend(const vote_refinery_t *r, size_t node_id,
 		     vote_mapping_t *m) {
   int left_id = r->tree->left[node_id];
   int right_id = r->tree->right[node_id];
+  real_t value[m->nb_outputs];
   
   // leaf node encountered, emit mapping
   if(left_id < 0 || right_id < 0) {
     assert(left_id < 0 && right_id < 0);
     
+    memcpy(value, r->tree->value[node_id], m->nb_outputs * sizeof(real_t));
+    if(r->tree->normalize) {
+      vote_normalize(value, m->nb_outputs);
+    }
+    
     for(size_t i=0; i<m->nb_outputs; i++) {
-      m->outputs[i].upper += r->tree->value[node_id][i];
-      m->outputs[i].lower += r->tree->value[node_id][i];
+      m->outputs[i].upper += value[i];
+      m->outputs[i].lower += value[i];
     }
 
     return vote_pipeline_output(r->pipeline, m) == VOTE_PASS;

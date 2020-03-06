@@ -38,6 +38,8 @@ struct vote_tree {
   size_t nb_inputs;
   size_t nb_outputs;
   size_t nb_nodes;
+
+  bool normalize;
 };
 
 

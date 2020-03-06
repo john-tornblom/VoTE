@@ -53,6 +53,22 @@ vote_argmin(const real_t* fvec, size_t length) {
 }
 
 
+void
+vote_normalize(real_t* vec, size_t length) {
+  real_t sum = 0;
+
+  for(size_t i=0; i<length; i++) {
+    sum += vec[i];
+  }
+
+  assert(sum != 0);
+  
+  for(size_t i=0; i<length; i++) {
+    vec[i] /= sum;
+  }
+}
+
+
 const char*
 vote_version(void) {
   return VERSION;

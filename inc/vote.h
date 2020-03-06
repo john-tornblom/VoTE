@@ -139,6 +139,12 @@ size_t vote_argmin(const real_t* fvec, size_t length);
 
 
 /**
+ * Normalize a vector.
+ **/
+void vote_normalize(real_t* fvec, size_t length);
+
+
+/**
  * Load a CSV file into memory. 
  *
  * A correctly formatted CSV file (using the comma delimiter) is assumed.

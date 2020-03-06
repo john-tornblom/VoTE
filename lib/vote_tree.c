@@ -113,7 +113,8 @@ vote_tree_parse(struct json_value_t *root) {
 
   tree->nb_inputs = (size_t)json_object_get_number(obj, "nb_inputs");
   tree->nb_outputs = (size_t)json_object_get_number(obj, "nb_outputs");
-
+  tree->normalize = json_object_get_boolean(obj, "normalize") > 0;
+  
   array = json_object_get_array(obj, "left");
   vote_parse_ints(array, &tree->left, &length);
   tree->nb_nodes = length;

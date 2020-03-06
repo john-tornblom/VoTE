@@ -141,18 +141,13 @@ def _sklearn_dt_to_dict(tree):
     '''
     Convert a sklearn decision tree into a dictionary.
     '''
-    
-    def normalize(matrix):
-        for row in matrix:
-            row /= np.sum(row) or 1
-
-        return matrix
-
     if tree._estimator_type == 'classifier':
         nb_outputs = tree.n_classes_
-        value = normalize(np.squeeze(tree.tree_.value))
+        normalize = True
+        value = np.squeeze(tree.tree_.value)
     else:
         nb_outputs = tree.n_outputs_
+        normalize = False
         value = np.squeeze(tree.tree_.value)
         if len(value.shape) == 1:
             value = value.reshape((len(value), 1))
@@ -163,6 +158,7 @@ def _sklearn_dt_to_dict(tree):
                 right=tree.tree_.children_right,
                 feature=tree.tree_.feature,
                 threshold=tree.tree_.threshold,
+                normalize=normalize,
                 value=value)
 
 

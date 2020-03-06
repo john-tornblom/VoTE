@@ -46,11 +46,18 @@ vote_abstract_join_tree(const vote_tree_t *t, size_t node_id,
 			vote_bound_t *outputs, size_t nb_outputs) {
   int left_id = t->left[node_id];
   int right_id = t->right[node_id];
-
+  real_t value[nb_outputs];
+    
   if(left_id < 0 || right_id < 0) {
+
+    memcpy(value, t->value[node_id], nb_outputs * sizeof(real_t));
+    if(t->normalize) {
+      vote_normalize(value, nb_outputs);
+    }
+  
     for(size_t i=0; i<nb_outputs; i++) {
-      outputs[i].lower = vote_min(t->value[node_id][i], outputs[i].lower);
-      outputs[i].upper = vote_max(t->value[node_id][i], outputs[i].upper);
+      outputs[i].lower = vote_min(value[i], outputs[i].lower);
+      outputs[i].upper = vote_max(value[i], outputs[i].upper);
     }
     return;
   }
