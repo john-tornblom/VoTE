@@ -22,37 +22,37 @@ see <http://www.gnu.org/licenses/>.  */
 
 
 /**
- *
+ * A data structure for queued work.
  **/
 typedef struct workqueue workqueue_t;
 
 
 /**
- *
+ * Callback function prototype for queued work.
  **/
 typedef void (workqueue_cb_t)(void *ctx);
 
 
 /**
- *
+ * Create a new work queue.
  **/
 workqueue_t *workqueue_new();
 
 
 /**
- *
+ * Schedule work for launch.
  **/
 void workqueue_schedule(workqueue_t *wq, workqueue_cb_t *cb, void *ctx);
 
 
 /**
- *
+ * Launch queued work on a number of threads.
  **/
 void workqueue_launch(workqueue_t* wq, unsigned short nb_threads);
 
 
 /**
- *
+ * Delete a work queue and free associated resources.
  **/
 void workqueue_del(workqueue_t *wq);
 

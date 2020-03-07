@@ -49,7 +49,7 @@ int main(int argc, char** argv) {
     exit(1);
   }
 
-  printf("accuracy:filename:   %s\n", argv[1]);
+  printf("accuracy:dataset:    %s\n", argv[1]);
   printf("accuracy:nb_inputs:  %ld\n", e->nb_inputs);
   printf("accuracy:nb_outputs: %ld\n", e->nb_outputs);
   printf("accuracy:nb_trees:   %ld\n", e->nb_trees);
