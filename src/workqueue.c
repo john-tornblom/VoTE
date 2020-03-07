@@ -34,9 +34,6 @@ struct workqueue {
 };
 
 
-/**
- * TODO: make lock-free with atomic compare_and_swap
- **/
 static task_t*
 workqueue_pop_task(workqueue_t *wq) {
   pthread_mutex_lock(&wq->lock);
