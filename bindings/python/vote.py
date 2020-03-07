@@ -183,15 +183,12 @@ def _catboost_gb_to_dict(inst):
     os.remove(filename)
 
     nb_inputs = len(cb['features_info']['float_features'])
-    nb_classes = (cb['model_info']['params']['data_processing_options']
-                  ['classes_count'])
-
-    if nb_classes > 1:
+    nb_classes = 0
+    
+    if inst._estimator_type == 'classifier':
         post_process = 'softmax'
-
-    elif inst._estimator_type == 'classifier':
-        post_process = 'sigmoid'
-
+        nb_classes = len(cb['model_info']['class_params']['class_names'])
+        
     elif inst._estimator_type == 'regressor':
         post_process = 'none'
 
