@@ -51,7 +51,6 @@ typedef struct sample_analysis {
  **/
 typedef struct robustness_analysis {
   vote_ensemble_t *ensemble;
-  FILE            *output;
   real_t           sample_timeout;
   real_t           margin;
   size_t           threads;
@@ -158,32 +157,28 @@ analyze_robustness(robustness_analysis_t *a) {
   size_t passed = 0;
   size_t timeouts = 0;
   
-  printf("# id,elapsed_time,outcome\n");
   for(size_t row=0; row<nb_samples; row++) {
     passed += analyses[row].outcome == VOTE_PASS;
     timeouts += analyses[row].outcome == VOTE_UNSURE;
-    printf("%ld,%g,%d\n", row, timespec_diff(&analyses[row].start_clock,
-					     &analyses[row].stop_clock),
-	   analyses[row].outcome);
   }
   
-  printf("# dataset:    %s\n", a->dataset->filename);
-  printf("# margin:     %g\n", a->margin);
-  printf("# timeout:    %gs\n", a->sample_timeout);
-  printf("# nb_inputs:  %ld\n", a->ensemble->nb_inputs);
-  printf("# nb_outputs: %ld\n", a->ensemble->nb_outputs);
-  printf("# nb_trees:   %ld\n", a->ensemble->nb_trees);
-  printf("# nb_nodes:   %ld\n", a->ensemble->nb_nodes);
-  printf("# passed:     %ld\n", passed);
-  printf("# timeouts:   %ld\n", timeouts);
+  printf("robustness:dataset:    %s\n", a->dataset->filename);
+  printf("robustness:margin:     %g\n", a->margin);
+  printf("robustness:timeout:    %gs\n", a->sample_timeout);
+  printf("robustness:nb_inputs:  %ld\n", a->ensemble->nb_inputs);
+  printf("robustness:nb_outputs: %ld\n", a->ensemble->nb_outputs);
+  printf("robustness:nb_trees:   %ld\n", a->ensemble->nb_trees);
+  printf("robustness:nb_nodes:   %ld\n", a->ensemble->nb_nodes);
+  printf("robustness:passed:     %ld\n", passed);
+  printf("robustness:timeouts:   %ld\n", timeouts);
 
   if(timeouts) {
-    printf("# score:      [%g,%g]\n", (real_t)passed / nb_samples,
+    printf("robustness:score:      [%g,%g]\n", (real_t)passed / nb_samples,
 	   (real_t)(passed + timeouts) / nb_samples);
   } else {
-    printf("# score:      %g\n", (real_t)passed / nb_samples);
+    printf("robustness:score:      %g\n", (real_t)passed / nb_samples);
   }
-  printf("# walltime:   %gs\n", walltime);
+  printf("robustness:runtime:    %gs\n", walltime);
 
   workqueue_del(wq);
 }
@@ -206,13 +201,6 @@ parse_cb(int key, char *arg, struct argp_state *state) {
 
   case 'M': //margin
     a->margin = atof(arg);
-    break;
-
-  case 'o': //output
-    if(!(a->output = fopen(arg, "w"))) {
-      fprintf(stderr, "Unable to write to %s\n", arg);
-      return ARGP_ERR_UNKNOWN;
-    }
     break;
 
   case 'T': //timeout
@@ -256,9 +244,6 @@ main(int argc, char** argv) {
     {.name="margin", .key='M', .arg="NUMBER",
      .doc="The additive margin to which the classifier should be robust against"},
 
-    {.name="output", .key='o', .arg="PATH",
-     .doc="Output counter examples in the CSV format to PATH"},
-
     {.name="threads", .key='t', .arg="NUMBER",
      .doc="Perform analyses concurrently on a given NUMBER of threads"},
     
@@ -286,10 +271,6 @@ main(int argc, char** argv) {
   }
 
   analyze_robustness(&a);
-  
-  if(a.output) {
-    fclose(a.output);
-  }
 
   if(a.ensemble) {
     vote_ensemble_del(a.ensemble);
