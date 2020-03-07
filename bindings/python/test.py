@@ -25,6 +25,8 @@ import os
 import tempfile
 import unittest
 
+import numpy as np
+
 import vote
 
 
@@ -466,148 +468,234 @@ class VoTEUtilityTestCase(SimpleVoTETestCase):
             m.outputs[dim].lower += 1
 
 
-class TestModelConvert(unittest.TestCase):
+def check_mapping(oracle_fn, itype, otype, m, epsilon=0):
+    center = [m.inputs[dim].lower + (m.inputs[dim].upper -
+                                     m.inputs[dim].lower) / 2
+              for dim in range(m.nb_inputs)]
 
-    def test_sklearn_rf_binary_classification(self):
+    lo = np.array([itype(m.inputs[dim].lower)
+          if itype(m.inputs[dim].lower) >= m.inputs[dim].lower
+          else np.nextafter(m.inputs[dim].lower, np.inf, dtype=itype)
+          for dim in range(m.nb_inputs)])
+
+    hi = np.array([itype(m.inputs[dim].upper)
+          if itype(m.inputs[dim].upper) <= m.inputs[dim].upper
+          else np.nextafter(m.inputs[dim].upper, -np.inf, dtype=itype)
+          for dim in range(m.nb_inputs)])
+        
+    X = np.array([lo + epsilon, center, hi - epsilon], dtype=itype)
+    Y = oracle_fn(X)
+
+    lo = [otype(m.outputs[dim].lower)
+          if otype(m.outputs[dim].lower) >= m.outputs[dim].lower
+          else np.nextafter(m.outputs[dim].lower, np.inf, dtype=otype)
+          for dim in range(m.nb_outputs)]
+
+    hi = [otype(m.outputs[dim].upper)
+          if otype(m.outputs[dim].upper) <= m.outputs[dim].upper
+          else np.nextafter(m.outputs[dim].upper, -np.inf, dtype=otype)
+          for dim in range(m.nb_outputs)]
+    
+    for xvec, yvec in zip(X, Y):
+        for dim in range(m.nb_outputs):
+            if lo[dim] > yvec[dim] + epsilon:
+                return vote.FAIL
+
+            if hi[dim] < yvec[dim] - epsilon:
+                return vote.FAIL
+                
+    if vote.mapping_precise(m):
+        return vote.PASS
+    else:
+        return vote.UNSURE
+
+
+class TestCatBoost(unittest.TestCase):
+    '''
+    CatBoost takes as input 64bit floats, and returns 64bit floats.
+    CatBoost also usees an optimized variant of the exp() functions which produce 
+    slightly different results than glibc exp(), hence an epsilon value of 1e-7.
+    '''
+    def test_binary_classification(self):
+        from catboost import CatBoostClassifier
+        from sklearn.datasets import make_classification
+        
+        X, Y = make_classification(n_classes=2, n_features=4, random_state=12345)
+        m = CatBoostClassifier(iterations=1, loss_function='MultiClass',
+                               thread_count=1, max_depth=4, random_state=12345)
+        m.fit(X, Y)
+        
+        e = vote.Ensemble.from_catboost(m)
+        pred = lambda X: m.predict_proba(X, thread_count=1)
+        cb = functools.partial(check_mapping, pred, np.float64, np.float64, epsilon=1e-7)
+        dom = [(np.finfo(np.float64).min, np.finfo(np.float64).max)] * e.nb_inputs
+
+        self.assertTrue(e.forall(cb, dom))
+        self.assertTrue(e.absref(cb, dom))
+
+    def test_multiclass_classification(self):
+        from catboost import CatBoostClassifier
+        
+        from sklearn.datasets import make_classification
+        X, Y = make_classification(n_classes=3, n_clusters_per_class=2,
+                                   n_informative=3, random_state=12345)
+        m = CatBoostClassifier(iterations=3, loss_function='MultiClass',
+                               thread_count=1, max_depth=4, random_state=12345)
+        m.fit(X, Y)
+
+        e = vote.Ensemble.from_catboost(m)
+        pred = lambda X: m.predict_proba(X, thread_count=1)
+        cb = functools.partial(check_mapping, pred, np.float64, np.float64, epsilon=1e-7)
+        dom = [(np.finfo(np.float64).min, np.finfo(np.float64).max)] * e.nb_inputs
+
+        self.assertTrue(e.forall(cb, dom))
+        self.assertTrue(e.absref(cb, dom))
+
+    def test_univariate_regression(self):
+        from catboost import CatBoostRegressor
+        from sklearn.datasets import make_regression
+
+        X, Y = make_regression(n_targets=1, n_features=2, random_state=12345)
+        m = CatBoostRegressor(iterations=3, max_depth=2, random_state=12345)
+        m.fit(X, Y)
+        
+        e = vote.Ensemble.from_catboost(m)
+        pred = lambda X: [[y] for y in m.predict(X, thread_count=1)]
+        cb = functools.partial(check_mapping, pred, np.float64, np.float64, epsilon=1e-7)
+        dom = [(np.finfo(np.float64).min, np.finfo(np.float64).max)] * e.nb_inputs
+        
+        self.assertTrue(e.forall(cb, dom))
+        self.assertTrue(e.absref(cb, dom))
+
+    def test_multivariate_regression(self):
+        from catboost import CatBoostRegressor
+        from sklearn.datasets import make_regression
+
+        X, Y = make_regression(n_targets=3, random_state=12345)
+        m = CatBoostRegressor(n_estimators=3, max_depth=4, random_state=12345,
+                              loss_function='MultiRMSE')
+        m.fit(X, Y)
+
+        e = vote.Ensemble.from_catboost(m)
+        pred = lambda X: m.predict(X, thread_count=1)
+        cb = functools.partial(check_mapping, pred, np.float64, np.float64, epsilon=1e-7)
+        dom = [(np.finfo(np.float64).min, np.finfo(np.float64).max)] * e.nb_inputs
+
+        self.assertTrue(e.forall(cb, dom))
+        self.assertTrue(e.absref(cb, dom))
+
+
+class TestSciKitLearn(unittest.TestCase):
+    '''
+    sklearn casts inputs to float32 while returning float64
+    '''
+    nb_trees = 2
+
+    def test_rf_binary_classification(self):
         from sklearn.ensemble import RandomForestClassifier
         from sklearn.datasets import make_classification
 
         X, Y = make_classification(n_classes=2, random_state=12345)
-        m = RandomForestClassifier(n_estimators=10, random_state=12345)
+        m = RandomForestClassifier(n_estimators=self.nb_trees, random_state=12345)
+        m.fit(X, Y)
+
+        e = vote.Ensemble.from_sklearn(m)
+        cb = functools.partial(check_mapping, m.predict_proba, np.float32, np.float64)
+        dom = [(np.finfo(np.float32).min, np.finfo(np.float32).max)] * e.nb_inputs
+        
+        self.assertTrue(e.forall(cb, dom))
+        self.assertTrue(e.absref(cb, dom))
+
+    def test_rf_multiclass_classification(self):
+        from sklearn.ensemble import RandomForestClassifier
+        from sklearn.datasets import make_classification
+
+        X, Y = make_classification(n_classes=3, n_clusters_per_class=2,
+                                   n_informative=3, random_state=12345)
+        m = RandomForestClassifier(n_estimators=self.nb_trees, random_state=12345)
         m.fit(X, Y)
         Y_pred = m.predict_proba(X)
         
         e = vote.Ensemble.from_sklearn(m)
-        for xvec, y_pred in zip(X, Y_pred):
-            self.assertEqual(e.eval(*xvec), list(y_pred))
-
-    def test_catboost_gb_binary_classification(self):
-        from catboost import CatBoostClassifier
-        from sklearn.datasets import make_classification
+        cb = functools.partial(check_mapping, m.predict_proba, np.float32, np.float64)
+        dom = [(np.finfo(np.float32).min, np.finfo(np.float32).max)] * e.nb_inputs
         
-        X, Y = make_classification(n_classes=2, random_state=12345)
-        m = CatBoostClassifier(iterations=10, random_state=12345)
+        self.assertTrue(e.forall(cb, dom))
+        self.assertTrue(e.absref(cb, dom))
+        
+    def test_rf_univariate_regression(self):
+        from sklearn.ensemble import RandomForestRegressor
+        from sklearn.datasets import make_regression
+
+        X, Y = make_regression(n_targets=1, random_state=12345)
+        m = RandomForestRegressor(n_estimators=self.nb_trees, random_state=12345)
         m.fit(X, Y)
-        Y_pred = m.predict_proba(X)
-        
-        e = vote.Ensemble.from_catboost(m)
-        for xvec, y_pred in zip(X, Y_pred):
-            p = e.eval(*xvec)[0]
-            for v1, v2 in zip([1-p, p], y_pred):
-                self.assertAlmostEqual(v1, v2)
+        Y_pred = m.predict(X)
 
-    def test_xgboost_gb_binary_classification(self):
+        e = vote.Ensemble.from_sklearn(m)
+        pred = lambda X: [[x] for x in m.predict(X)]
+        cb = functools.partial(check_mapping, pred, np.float32, np.float64)
+        dom = [(np.finfo(np.float32).min, np.finfo(np.float32).max)] * e.nb_inputs
+        
+        self.assertTrue(e.forall(cb, dom))
+        self.assertTrue(e.absref(cb, dom))
+
+    def test_rf_multivariate_regression(self):
+        from sklearn.ensemble import RandomForestRegressor
+        from sklearn.datasets import make_regression
+
+        X, Y = make_regression(n_targets=3, random_state=12345)
+        m = RandomForestRegressor(n_estimators=self.nb_trees, random_state=12345)
+        m.fit(X, Y)
+        
+        e = vote.Ensemble.from_sklearn(m)
+        cb = functools.partial(check_mapping, m.predict, np.float32, np.float64)
+        dom = [(np.finfo(np.float32).min, np.finfo(np.float32).max)] * e.nb_inputs
+        
+        self.assertTrue(e.forall(cb, dom))
+        self.assertTrue(e.absref(cb, dom))
+
+
+class TestXGBoost(unittest.TestCase):
+    '''
+    XGBoost use 32bit floats when summing up trees, hence suffer from
+    precision loss compared to, e.g., sklearn who uses 64bit floats
+    internally, hence an epsilon value of 1e-3.
+    '''
+    
+    def test_binary_classification(self):
         from xgboost import XGBClassifier
         from sklearn.datasets import make_classification
         
-        X, Y = make_classification(n_classes=2, random_state=12345)
-        m = XGBClassifier(iterations=10, random_state=12345)
+        X, Y = make_classification(n_classes=2, n_features=4, random_state=12345)
+        m = XGBClassifier(iterations=3, n_jobs=1, max_depth=4, random_state=12345)
         m.fit(X, Y)
-        Y_pred = m.predict_proba(X)
         
         e = vote.Ensemble.from_xgboost(m)
-        for xvec, y_pred in zip(X, Y_pred):
-            p = e.eval(*xvec)[0]
-            for v1, v2 in zip([1-p, p], y_pred):
-                self.assertAlmostEqual(v1, v2, places=6)
-                
-    def test_sklearn_rf_multiclass_classification(self):
-        from sklearn.ensemble import RandomForestClassifier
-        from sklearn.datasets import make_classification
-
-        X, Y = make_classification(n_classes=3, n_clusters_per_class=2,
-                                   n_informative=3, random_state=12345)
-        m = RandomForestClassifier(n_estimators=10, random_state=12345)
-        m.fit(X, Y)
-        Y_pred = m.predict_proba(X)
+        pred = lambda X: [[p[1]] for p in m.predict_proba(X)]
+        cb = functools.partial(check_mapping, pred, np.float32, np.float32, epsilon=1e-3)
+        dom = [(np.finfo(np.float32).min, np.finfo(np.float32).max)] * e.nb_inputs
         
-        e = vote.Ensemble.from_sklearn(m)
-        for xvec, y_pred in zip(X, Y_pred):
-            self.assertEqual(e.eval(*xvec), list(y_pred))
-
-    def test_catboost_gb_multiclass_classification(self):
-        from catboost import CatBoostClassifier
-        from sklearn.datasets import make_classification
-        
-        X, Y = make_classification(n_classes=3, n_clusters_per_class=2,
-                                   n_informative=3, random_state=12345)
-        m = CatBoostClassifier(loss_function='MultiClass', classes_count=3,
-                               iterations=10, random_state=12345)
-        m.fit(X, Y)
-        Y_pred = m.predict_proba(X)
-        
-        e = vote.Ensemble.from_catboost(m)
-        for xvec, y_pred in zip(X, Y_pred):
-            for v1, v2 in zip(e.eval(*xvec), y_pred):
-                self.assertAlmostEqual(v1, v2)
-
-    def test_sklearn_rf_univariate_regression(self):
-        from sklearn.ensemble import RandomForestRegressor
-        from sklearn.datasets import make_regression
-
-        X, Y = make_regression(n_targets=1, random_state=12345)
-        m = RandomForestRegressor(n_estimators=10, random_state=12345)
-        m.fit(X, Y)
-        Y_pred = m.predict(X)
-        
-        e = vote.Ensemble.from_sklearn(m)
-        for xvec, y_pred in zip(X, Y_pred):
-            self.assertEqual(e.eval(*xvec)[0], y_pred)
-
-    def test_catboost_gb_univariate_regression(self):
-        from catboost import CatBoostRegressor
-        from sklearn.datasets import make_regression
-
-        X, Y = make_regression(n_targets=1, random_state=12345)
-        m = CatBoostRegressor(iterations=10, random_state=12345)
-        m.fit(X, Y)
-        Y_pred = m.predict(X)
-        
-        e = vote.Ensemble.from_catboost(m)
-        for xvec, y_pred in zip(X, Y_pred):
-            self.assertEqual(e.eval(*xvec)[0], y_pred)
-
-    def test_xgboost_gb_univariate_regression(self):
+        self.assertTrue(e.forall(cb, dom))
+        self.assertTrue(e.absref(cb, dom))
+            
+    def test_univariate_regression(self):
         from xgboost import XGBRegressor
         from sklearn.datasets import make_regression
 
-        X, Y = make_regression(n_targets=1, random_state=12345)
-        m = XGBRegressor(iterations=10, base_score=0, random_state=12345)
+        X, Y = make_regression(n_targets=1, n_features=2, random_state=12345)
+        m = XGBRegressor(iterations=3, base_score=0, objective='reg:squarederror',
+                         n_jobs=1, random_state=12345)
         m.fit(X, Y)
-        Y_pred = m.predict(X)
         
         e = vote.Ensemble.from_xgboost(m)
-        for xvec, y_pred in zip(X, Y_pred):
-            # precision in xgb is not great with 32bit floats
-            self.assertAlmostEqual(e.eval(*xvec)[0], y_pred, places=3)
-
-    def test_sklearn_rf_multivariate_regression(self):
-        from sklearn.ensemble import RandomForestRegressor
-        from sklearn.datasets import make_regression
-
-        X, Y = make_regression(n_targets=3, random_state=12345)
-        m = RandomForestRegressor(n_estimators=10, random_state=12345)
-        m.fit(X, Y)
-        Y_pred = m.predict(X)
+        pred = lambda X: [[y] for y in m.predict(X)]
+        cb = functools.partial(check_mapping, pred, np.float32, np.float32, epsilon=1e-3)
+        dom = [(np.finfo(np.float32).min, np.finfo(np.float32).max)] * e.nb_inputs
         
-        e = vote.Ensemble.from_sklearn(m)
-        for xvec, y_pred in zip(X, Y_pred):
-            self.assertEqual(e.eval(*xvec), list(y_pred))
+        self.assertTrue(e.forall(cb, dom))
+        self.assertTrue(e.absref(cb, dom))
 
-    def test_catboost_gb_multivariate_regression(self):
-        from catboost import CatBoostRegressor
-        from sklearn.datasets import make_regression
-
-        X, Y = make_regression(n_targets=3, random_state=12345)
-        m = CatBoostRegressor(n_estimators=10, random_state=12345,
-                              loss_function='MultiRMSE')
-        m.fit(X, Y)
-        Y_pred = m.predict(X)
         
-        e = vote.Ensemble.from_catboost(m)
-        for xvec, y_pred in zip(X, Y_pred):
-            self.assertEqual(e.eval(*xvec), list(y_pred))
-  
-
 if __name__ == "__main__":
     unittest.main()
