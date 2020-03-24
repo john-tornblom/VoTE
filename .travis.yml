@@ -6,7 +6,7 @@ matrix:
       language: c
       install:
         - "sudo apt-get install autoconf libtool build-essential"
-        - "python2 -m pip install cffi sklearn catboost xgboost --user"
+        - "python2 -m pip install cffi sklearn catboost==0.19.1 xgboost --user"
       script:
         - "./bootstrap.sh"
         - "PYTHON=python2 ./configure"
@@ -22,7 +22,7 @@ matrix:
       python: "3.6"
       install:
         - "sudo apt-get install autoconf libtool build-essential"
-        - "pip install cffi sklearn catboost xgboost"
+        - "pip install cffi sklearn catboost==0.19.1 xgboost"
       script:
         - "./bootstrap.sh"
         - "PYTHON=python3 ./configure"
@@ -35,7 +35,7 @@ matrix:
       os: osx
       language: c
       install:
-        - "pip install cffi sklearn catboost xgboost --user"
+        - "pip install cffi sklearn catboost==0.19.1 xgboost --user"
       script:
         - "./bootstrap.sh"
         - "./configure"
