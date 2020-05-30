@@ -157,6 +157,7 @@ vote_tree_encode(const vote_tree_t* t) {
   
   json_object_set_number(obj, "nb_inputs", (double)t->nb_inputs);
   json_object_set_number(obj, "nb_outputs", (double)t->nb_outputs);
+  json_object_set_boolean(obj, "normalize", t->normalize);
 
   json_object_set_value(obj, "left", vote_encode_ints(t->left, t->nb_nodes));
   json_object_set_value(obj, "right", vote_encode_ints(t->right, t->nb_nodes));
