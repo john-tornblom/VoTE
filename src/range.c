@@ -77,7 +77,6 @@ is_within_range(void *ctx, vote_mapping_t *m) {
  **/
 int main(int argc, char** argv) {
   vote_ensemble_t* e;
-  vote_mapping_t* m;
   bool b;
   
   if(argc < 2) {

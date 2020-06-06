@@ -445,7 +445,7 @@ vote_csv_load(const char* filename) {
 }
 
 
-vote_dataset_t*
+void
 vote_dataset_del(vote_dataset_t* ds) {
   free(ds->filename);
   free(ds->data);

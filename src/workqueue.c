@@ -54,7 +54,7 @@ workqueue_thread(void *ctx) {
   task_t *task;
   workqueue_t* wq = (workqueue_t*)ctx;
 
-  while(task = workqueue_pop_task(wq)) {
+  while((task = workqueue_pop_task(wq))) {
     task->cb(task->ctx);
   }
   

@@ -155,7 +155,7 @@ vote_dataset_t* vote_csv_load(const char* filename);
 /**
  * Delete a dataset and free associated resources.
  **/
-vote_dataset_t* vote_dataset_del(vote_dataset_t* ds);
+void vote_dataset_del(vote_dataset_t* ds);
 
 
 /**
