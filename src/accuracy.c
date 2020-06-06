@@ -67,12 +67,12 @@ int main(int argc, char** argv) {
     size_t label = sample[e->nb_inputs];
     score += (pred == label);
   }
+
+  printf("accuracy:score:      %f\n", score/ds->nb_rows);
     
   vote_ensemble_del(e);
   vote_dataset_del(ds);
   
-  printf("accuracy:score:      %f\n", score/ds->nb_rows);
-
   return 0;
 }
 

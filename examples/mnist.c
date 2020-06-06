@@ -217,12 +217,12 @@ int main(int argc, char** argv) {
       score++;
     }
   }
-  
-  vote_ensemble_del(e);
-  vote_dataset_del(ds);
 
   printf("mnist:score:      %f\n", score/ds->nb_rows);
   printf("mnist:runtime:    %lds\n", time(NULL) - t);
+
+  vote_ensemble_del(e);
+  vote_dataset_del(ds);
   
   return 0;
 }
