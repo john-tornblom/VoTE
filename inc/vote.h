@@ -26,14 +26,16 @@ see <http://www.gnu.org/licenses/>.  */
 
 
 #define VOTE_UNUSED(x) (void)(x)
+
 #define USE_DOUBLE 1
-typedef double real_t;
 
 
 #if USE_DOUBLE
+typedef double real_t;
 #define VOTE_INFINITY (real_t)INFINITY
 #define VOTE_NAN      (real_t)NAN
 #else
+typedef float real_t;
 #define VOTE_INFINITY INFINITY
 #define VOTE_NAN      NAN
 #endif
