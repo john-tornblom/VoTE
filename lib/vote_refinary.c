@@ -42,10 +42,11 @@ static bool vote_refinery_decend(const vote_refinery_t *r, size_t node_id,
 static bool
 vote_refinery_decend_left(const vote_refinery_t *r, size_t node_id,
 			  vote_mapping_t *m) {
-  int left_id = r->tree->left[node_id];
-  int right_id = r->tree->right[node_id];
-  real_t threshold = r->tree->threshold[node_id];
-  int dim = r->tree->feature[node_id];
+  const vote_tree_t *t = r->tree;
+  int left_id = t->left[node_id];
+  int right_id = t->right[node_id];
+  real_t threshold = t->threshold[node_id];
+  int dim = t->feature[node_id];
 
   // refine left split: [lower, threshold]
   if(m->inputs[dim].lower <= threshold) {
@@ -85,10 +86,11 @@ vote_refinery_decend_left(const vote_refinery_t *r, size_t node_id,
 static bool
 vote_refinery_decend_right(const vote_refinery_t *r, size_t node_id,
 			   vote_mapping_t *m) {
-  int left_id = r->tree->left[node_id];
-  int right_id = r->tree->right[node_id];
-  real_t threshold = r->tree->threshold[node_id];
-  int dim = r->tree->feature[node_id];
+  const vote_tree_t *t = r->tree;
+  int left_id = t->left[node_id];
+  int right_id = t->right[node_id];
+  real_t threshold = t->threshold[node_id];
+  int dim = t->feature[node_id];
 
   // refine right split: (threshold, upper]
   if(m->inputs[dim].upper > threshold) {
@@ -131,16 +133,17 @@ vote_refinery_decend_right(const vote_refinery_t *r, size_t node_id,
 static bool
 vote_refinery_decend(const vote_refinery_t *r, size_t node_id,
 		     vote_mapping_t *m) {
-  int left_id = r->tree->left[node_id];
-  int right_id = r->tree->right[node_id];
+  const vote_tree_t *t = r->tree;
+  int left_id = t->left[node_id];
+  int right_id = t->right[node_id];
   real_t value[m->nb_outputs];
   
   // leaf node encountered, emit mapping
   if(left_id < 0 || right_id < 0) {
     assert(left_id < 0 && right_id < 0);
     
-    memcpy(value, r->tree->value[node_id], m->nb_outputs * sizeof(real_t));
-    if(r->tree->normalize) {
+    memcpy(value, t->value[node_id], m->nb_outputs * sizeof(real_t));
+    if(t->normalize) {
       vote_normalize(value, m->nb_outputs);
     }
     
@@ -157,8 +160,8 @@ vote_refinery_decend(const vote_refinery_t *r, size_t node_id,
   //   |-----------|-----------|
   // lower     threshold     upper
   
-  real_t threshold = r->tree->threshold[node_id];
-  int dim = r->tree->feature[node_id];
+  real_t threshold = t->threshold[node_id];
+  int dim = t->feature[node_id];
 
   real_t right_width = m->inputs[dim].upper - threshold;
   real_t left_width = threshold - m->inputs[dim].lower;
