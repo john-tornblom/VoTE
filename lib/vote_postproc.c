@@ -35,10 +35,10 @@ typedef struct vote_postproc {
  * Post-processing used by random forests.
  **/
 static void
-vote_mapping_division(vote_mapping_t *m, size_t divisor) {
-  for(size_t i=0; i<m->nb_outputs; i++) {
-    m->outputs[i].lower /= divisor;
-    m->outputs[i].upper /= divisor;
+vote_bound_division(vote_bound_t *values, size_t nb_values, size_t divisor) {
+  for(size_t i=0; i<nb_values; i++) {
+    values[i].lower /= divisor;
+    values[i].upper /= divisor;
   }
 }
 
@@ -47,20 +47,20 @@ vote_mapping_division(vote_mapping_t *m, size_t divisor) {
  * Post-processing algorithm used by some gradient boosting machines.
  **/
 static void
-vote_mapping_softmax(vote_mapping_t *m) {
+vote_bound_softmax(vote_bound_t *values, size_t nb_values) {
   vote_bound_t sum = {0, 0};
   vote_bound_t off = {0, 0};
   real_t max = -VOTE_INFINITY;
 
   // This is used for numerical stabillity, see
   // http://www.deeplearningbook.org/contents/numerical.html
-  for(size_t i=0; i<m->nb_outputs; i++) {
-    max = vote_max(max, m->outputs[i].upper);
+  for(size_t i=0; i<nb_values; i++) {
+    max = vote_max(max, values[i].upper);
   }
 
-  for(size_t i=0; i<m->nb_outputs; i++) {
-    sum.lower += vote_exp(m->outputs[i].lower - max);
-    sum.upper += vote_exp(m->outputs[i].upper - max);
+  for(size_t i=0; i<nb_values; i++) {
+    sum.lower += vote_exp(values[i].lower - max);
+    sum.upper += vote_exp(values[i].upper - max);
   }
 
   // log(0) results in undefined behaviour
@@ -75,9 +75,9 @@ vote_mapping_softmax(vote_mapping_t *m) {
   off.lower = -off.upper;
   off.upper = -tmp;
     
-  for(size_t i=0; i<m->nb_outputs; i++) {
-    m->outputs[i].lower = vote_exp(off.lower + m->outputs[i].lower);
-    m->outputs[i].upper = vote_exp(off.upper + m->outputs[i].upper);
+  for(size_t i=0; i<nb_values; i++) {
+    values[i].lower = vote_exp(off.lower + values[i].lower);
+    values[i].upper = vote_exp(off.upper + values[i].upper);
   }
 }
 
@@ -86,13 +86,35 @@ vote_mapping_softmax(vote_mapping_t *m) {
  * Post-processing algorithm used by some gradient boosting machines.
  **/
 static void
-vote_mapping_sigmoid(vote_mapping_t *m) {
-  for(size_t i=0; i<m->nb_outputs; i++) {
-    m->outputs[i].lower = (vote_exp(m->outputs[i].lower) /
-			   (1 + vote_exp(m->outputs[i].lower)));
+vote_bound_sigmoid(vote_bound_t *values, size_t nb_values) {
+  for(size_t i=0; i<nb_values; i++) {
+    values[i].lower = (vote_exp(values[i].lower) /
+		       (1 + vote_exp(values[i].lower)));
     
-    m->outputs[i].upper = (vote_exp(m->outputs[i].upper) /
-			   (1 + vote_exp(m->outputs[i].upper)));
+    values[i].upper = (vote_exp(values[i].upper) /
+		       (1 + vote_exp(values[i].upper)));
+  }
+}
+
+
+void
+vote_ensemble_postproc(const vote_ensemble_t *e, vote_bound_t *outputs) {
+  switch(e->post_process) {
+  case VOTE_POST_PROCESS_DIVISOR:
+    vote_bound_division(outputs, e->nb_outputs, e->nb_trees);
+    break;
+    
+  case VOTE_POST_PROCESS_SOFTMAX:
+    vote_bound_softmax(outputs, e->nb_outputs);
+    break;
+    
+  case VOTE_POST_PROCESS_SIGMOID:
+    vote_bound_sigmoid(outputs, e->nb_outputs);
+    break;
+    
+  default:
+  case VOTE_POST_PROCESS_NONE:
+    break;
   }
 }
 
@@ -104,23 +126,7 @@ static vote_outcome_t
 vote_postproc_input(void *ctx, vote_mapping_t *m) {
   vote_postproc_t *pp = (vote_postproc_t*)ctx;
 
-  switch(pp->ensemble->post_process) {    
-  case VOTE_POST_PROCESS_DIVISOR:
-    vote_mapping_division(m, pp->ensemble->nb_trees);
-    break;
-    
-  case VOTE_POST_PROCESS_SOFTMAX:
-    vote_mapping_softmax(m);
-    break;
-    
-  case VOTE_POST_PROCESS_SIGMOID:
-    vote_mapping_sigmoid(m);
-    break;
-    
-  default:
-  case VOTE_POST_PROCESS_NONE:
-    break;
-  }
+  vote_ensemble_postproc(pp->ensemble, m->outputs);
   
   return pp->user_cb(pp->user_ctx, m);
 }

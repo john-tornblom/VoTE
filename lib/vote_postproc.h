@@ -23,6 +23,11 @@ see <http://www.gnu.org/licenses/>.  */
 #include "vote.h"
 #include "vote_pipeline.h"
 
+/**
+ * Apply the post-processing function to the outputs of a tree ensemble.
+ **/
+void vote_ensemble_postproc(const vote_ensemble_t *e, vote_bound_t *outputs);
+
 
 /**
  * Create a post-processing component for a pipeline.
