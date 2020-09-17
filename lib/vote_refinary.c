@@ -47,34 +47,40 @@ vote_refinery_decend_left(const vote_refinery_t *r, size_t node_id,
   int right_id = t->right[node_id];
   real_t threshold = t->threshold[node_id];
   int dim = t->feature[node_id];
-
+  real_t lower = m->inputs[dim].lower;
+  real_t upper = m->inputs[dim].upper;
+ 
   // refine left split: [lower, threshold]
-  if(m->inputs[dim].lower <= threshold) {
-    vote_bound_t inputs[m->nb_inputs];
+  if(lower <= threshold) {
     vote_bound_t outputs[m->nb_outputs];
     vote_mapping_t msplit = {
-      .inputs = inputs,
+      .inputs = m->inputs,
       .outputs = outputs,
       .nb_inputs = m->nb_inputs,
       .nb_outputs = m->nb_outputs
     };
-    memcpy(msplit.inputs, m->inputs, m->nb_inputs * sizeof(vote_bound_t));
     memcpy(msplit.outputs, m->outputs, m->nb_outputs * sizeof(vote_bound_t));
   
-    if(msplit.inputs[dim].upper > threshold) {
+    if(upper > threshold) {
       msplit.inputs[dim].upper = threshold;
     }
     if(!vote_refinery_decend(r, left_id, &msplit)) {
       return false;
     }
+
+    m->inputs[dim].upper = upper;
   }
 
   // refine right split: (threshold, upper]
-  if(m->inputs[dim].upper > threshold) {
-    if(m->inputs[dim].lower < threshold) {
+  if(upper > threshold) {
+    if(lower < threshold) {
       m->inputs[dim].lower = vote_nextafter(threshold, VOTE_INFINITY);
     }
-    return vote_refinery_decend(r, right_id, m);
+    if(!vote_refinery_decend(r, right_id, m)) {
+      return false;
+    }
+
+    m->inputs[dim].lower = lower;
   }
   return true;
 }
@@ -91,36 +97,42 @@ vote_refinery_decend_right(const vote_refinery_t *r, size_t node_id,
   int right_id = t->right[node_id];
   real_t threshold = t->threshold[node_id];
   int dim = t->feature[node_id];
-
+  real_t lower = m->inputs[dim].lower;
+  real_t upper = m->inputs[dim].upper;
+ 
   // refine right split: (threshold, upper]
-  if(m->inputs[dim].upper > threshold) {
-    vote_bound_t inputs[m->nb_inputs];
+  if(upper > threshold) {
     vote_bound_t outputs[m->nb_outputs];
     vote_mapping_t msplit = {
-      .inputs = inputs,
+      .inputs = m->inputs,
       .outputs = outputs,
       .nb_inputs = m->nb_inputs,
       .nb_outputs = m->nb_outputs
     };
       
-    memcpy(msplit.inputs, m->inputs, m->nb_inputs * sizeof(vote_bound_t));
     memcpy(msplit.outputs, m->outputs, m->nb_outputs * sizeof(vote_bound_t));
   
-    if(msplit.inputs[dim].lower < threshold) {
+    if(lower < threshold) {
       msplit.inputs[dim].lower = vote_nextafter(threshold, VOTE_INFINITY);
     }
     if(!vote_refinery_decend(r, right_id, &msplit)) {
       return false;
     }
+    
+    m->inputs[dim].lower = lower;
   }
 
   // refine left split: [lower, threshold]
-  if(m->inputs[dim].lower <= threshold) {
-    if(m->inputs[dim].upper > threshold) {
+  if(lower <= threshold) {
+    if(upper > threshold) {
       m->inputs[dim].upper = threshold;
     }
 
-    return vote_refinery_decend(r, left_id, m);
+    if(!vote_refinery_decend(r, left_id, m)) {
+      return false;
+    }
+    
+    m->inputs[dim].upper = upper;
   }
   return true;
 }
@@ -170,7 +182,7 @@ vote_refinery_decend(const vote_refinery_t *r, size_t node_id,
     return vote_refinery_decend_left(r, node_id, m);
   } else {
     return vote_refinery_decend_right(r, node_id, m);
-  }  
+  }
 }
 
 
