@@ -152,7 +152,11 @@ vote_xgboost_load(FILE* f) {
     abort();
   }
 
-  assert(learn_param.num_feature == (unsigned int)model_param.num_feature);
+  if(!model_param.num_feature) {
+    model_param.num_feature = learn_param.num_feature;
+  } else {
+    assert(learn_param.num_feature == (unsigned int)model_param.num_feature);
+  }
   
   e->nb_inputs = model_param.num_feature;
   e->nb_trees  = model_param.num_trees;
