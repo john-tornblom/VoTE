@@ -197,7 +197,7 @@ def _catboost_gb_to_dict(inst):
     else:
         raise NotImplementedError
 
-    scale, bias = cb['scale_and_bias']
+    scale, biases = cb['scale_and_bias']
     tree_obj_list = list()
     for tree in cb['oblivious_trees']:
         tree_obj = dict()
@@ -207,6 +207,9 @@ def _catboost_gb_to_dict(inst):
         nb_nodes = (2 ** depth) - 1
         nb_leaves = len(tree['leaf_values'])
         nb_outputs = nb_leaves // (2 ** nb_splits)
+
+        if not isinstance(biases, list):
+            biases = [biases] * nb_outputs
         
         tree_obj['nb_inputs'] = nb_inputs
         tree_obj['nb_outputs'] = nb_outputs
@@ -229,12 +232,13 @@ def _catboost_gb_to_dict(inst):
         queue = collections.deque(tree['leaf_values'])
         for node_id in range(2 ** nb_splits - 1, nb_nodes):
             values = reversed([queue.pop() for _ in range(nb_outputs)])
-            tree_obj['value'][node_id] = [(val * scale) + bias for val in values]
+            tree_obj['value'][node_id] = [(val * scale) + bias
+                                          for val, bias in zip(values, biases)]
 
         tree_obj_list.append(tree_obj)
 
         scale = 1
-        bias = 0
+        biases = [0] * nb_outputs
     
     return dict(trees=tree_obj_list,
                 post_process=post_process)
