@@ -79,7 +79,8 @@ class SimpleVoTETestCase(unittest.TestCase):
         "right": [4, 3, -1, -1, 6, -1, -1],
         "feature": [0, 0, -1, -1, 0, -1, -1],
         "threshold": [5, 1, -1, -1, 9, -1, -1],
-        "value": [[-1], [-1], [0], [1], [-1], [2], [3]]
+        "value": [[-1], [-1], [0], [1], [-1], [2], [3]],
+        "normalize": false
       }, {
         "nb_inputs": 1,
         "nb_outputs": 1,
@@ -87,7 +88,8 @@ class SimpleVoTETestCase(unittest.TestCase):
         "right": [4, 3, -1, -1, 6, -1, -1],
         "feature": [0, 0, -1, -1, 0, -1, -1],
         "threshold": [2, 1, -1, -1, 6, -1, -1],
-        "value": [[-1], [-1], [1], [0], [-1], [5], [2]]
+        "value": [[-1], [-1], [1], [0], [-1], [5], [2]],
+        "normalize": false
       }
     ],
     "post_process": "divisor"}'''
