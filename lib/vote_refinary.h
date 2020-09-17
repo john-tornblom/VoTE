@@ -22,6 +22,7 @@ see <http://www.gnu.org/licenses/>.  */
 
 #include "vote.h"
 #include "vote_tree.h"
+#include "vote_pipeline.h"
 
 
 /**
