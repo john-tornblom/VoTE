@@ -187,7 +187,9 @@ def _catboost_gb_to_dict(inst):
     
     if inst._estimator_type == 'classifier':
         post_process = 'softmax'
-        nb_classes = len(cb['model_info']['class_params']['class_names'])
+        cls_params = (cb['model_info'].get('class_params', None) or
+                      cb['model_info'].get('multiclass_params', None))
+        nb_classes = len(cls_params['class_names'])
         
     elif inst._estimator_type == 'regressor':
         post_process = 'none'
