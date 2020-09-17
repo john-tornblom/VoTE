@@ -37,13 +37,10 @@ typedef struct vote_abstract {
 } vote_abstract_t;
 
 
-/**
- * Compute the join of a tree for a particular input region.
- **/
 static void
-vote_abstract_join_tree(const vote_tree_t *t, size_t node_id,
-			const vote_bound_t *inputs, size_t nb_inputs,
-			vote_bound_t *outputs, size_t nb_outputs) {
+vote_abstract_join_decend_tree(const vote_tree_t *t, size_t node_id,
+			       const vote_bound_t *inputs, size_t nb_inputs,
+			       vote_bound_t *outputs, size_t nb_outputs) {
   int left_id = t->left[node_id];
   int right_id = t->right[node_id];
   real_t value[nb_outputs];
@@ -67,38 +64,48 @@ vote_abstract_join_tree(const vote_tree_t *t, size_t node_id,
     
   // left: [lower, threshold]
   if(inputs[dim].lower <= threshold) {
-    vote_abstract_join_tree(t, left_id, inputs, nb_inputs, outputs, nb_outputs);
+    vote_abstract_join_decend_tree(t, left_id,
+				   inputs, nb_inputs,
+				   outputs, nb_outputs);
   }
 
   // right: (threshold, upper]
   if(inputs[dim].upper > threshold) {
-    vote_abstract_join_tree(t, right_id, inputs, nb_inputs, outputs, nb_outputs);
+    vote_abstract_join_decend_tree(t, right_id,
+				   inputs, nb_inputs,
+				   outputs, nb_outputs);
   }
 }
 
 
-/**
- * Compute the join of a set of trees for a particular input region.
- **/
-static void
-vote_abstract_join_trees(vote_tree_t *const*trees, size_t nb_trees,
-			 vote_mapping_t *m) {
+void
+vote_abstract_join_tree(const vote_tree_t *t,
+			const vote_bound_t *inputs, size_t nb_inputs,
+			vote_bound_t *outputs, size_t nb_outputs) {
   const size_t root_id = 0;
-  vote_bound_t tree_outputs[m->nb_outputs];
   
-  for(size_t i=0; i<nb_trees; i++) {
-    for(size_t dim=0; dim<m->nb_outputs; dim++) {
-      tree_outputs[dim].lower = VOTE_INFINITY;
-      tree_outputs[dim].upper = -VOTE_INFINITY;
-    }
-    
-    vote_abstract_join_tree(trees[i], root_id,
-			    m->inputs, m->nb_inputs,
-			    tree_outputs, m->nb_outputs);
+  for(size_t i=0; i<t->nb_outputs; i++) {
+    outputs[i].lower = VOTE_INFINITY;
+    outputs[i].upper = -VOTE_INFINITY;
+  }
 
-    for(size_t dim=0; dim<m->nb_outputs; dim++) {
-      m->outputs[dim].lower += tree_outputs[dim].lower;
-      m->outputs[dim].upper += tree_outputs[dim].upper;
+  vote_abstract_join_decend_tree(t, root_id, inputs, nb_inputs, outputs, nb_outputs);
+}
+
+
+void
+vote_abstract_join_trees(vote_tree_t *const*trees, size_t nb_trees,
+			 const vote_bound_t *inputs, size_t nb_inputs,
+			 vote_bound_t *outputs, size_t nb_outputs) {
+  vote_bound_t tree_outputs[nb_outputs];
+  
+  for(size_t i=0; i<nb_trees; i++) {    
+    vote_abstract_join_tree(trees[i], inputs, nb_inputs,
+			    tree_outputs, nb_outputs);
+
+    for(size_t dim=0; dim<nb_outputs; dim++) {
+      outputs[dim].lower += tree_outputs[dim].lower;
+      outputs[dim].upper += tree_outputs[dim].upper;
     }
   }
 }
@@ -119,7 +126,9 @@ vote_abstract_input(void *ctx, vote_mapping_t *m) {
   };
 
   memcpy(outputs, m->outputs, m->nb_outputs * sizeof(vote_bound_t));
-  vote_abstract_join_trees(a->trees, a->nb_trees, &join);
+  vote_abstract_join_trees(a->trees, a->nb_trees, m->inputs, m->nb_inputs,
+			   outputs, m->nb_outputs);
+  
   vote_outcome_t o = vote_pipeline_input(a->postproc, &join);
 
   if(o == VOTE_UNSURE) {

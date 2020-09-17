@@ -22,7 +22,24 @@ see <http://www.gnu.org/licenses/>.  */
 
 #include "vote.h"
 #include "vote_tree.h"
+#include "vote_pipeline.h"
 
+
+/**
+ * Compute the join of a tree for a particular input region.
+ **/
+void vote_abstract_join_tree(const vote_tree_t *t,
+			     const vote_bound_t *inputs, size_t nb_inputs,
+			     vote_bound_t *outputs, size_t nb_outputs);
+
+
+/**
+ * Compute the join of a set of trees for a particular input region.
+ **/
+void
+vote_abstract_join_trees(vote_tree_t *const*trees, size_t nb_trees,
+			 const vote_bound_t *inputs, size_t nb_inputs,
+			 vote_bound_t *outputs, size_t nb_outputs);
 
 
 /**
