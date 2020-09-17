@@ -32,14 +32,18 @@ import build
 
 class TestCommand(Command):
     description = "Execute unit tests"
-    user_options = []
+    user_options = [('name=', None, 'Limit testing to a single test case or test method')]
 
-    def initialize_options(self): pass
-    def finalize_options(self): pass
+    def initialize_options(self):
+        self.name = 'test'
 
+    def finalize_options(self):
+        pass
+    
     def run(self):
-        dirname = os.path.dirname(__file__) or '.'
-        suite = unittest.TestLoader().discover(dirname)
+        suite = unittest.TestLoader().loadTestsFromName(self.name)
+
+            
         runner = unittest.TextTestRunner(verbosity=2, buffer=True)
         exit_code = not runner.run(suite).wasSuccessful()
         sys.exit(exit_code)
