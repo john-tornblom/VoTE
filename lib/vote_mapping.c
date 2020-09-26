@@ -87,8 +87,8 @@ vote_mapping_argmax(const vote_mapping_t* m) {
 
   // assume the output is probability in 0/1 classification
   if(m->nb_outputs == 1) {
-    if((m->outputs[0].lower >= 0.5) == (m->outputs[0].upper >= 0.5)) {
-      return m->outputs[0].lower >= 0.5;
+    if((m->outputs[0].lower >= (real_t)0.5) == (m->outputs[0].upper >= (real_t)0.5)) {
+      return m->outputs[0].lower >= (real_t)0.5;
     }
     return -1;
   }
@@ -119,10 +119,10 @@ vote_mapping_check_argmax(const vote_mapping_t* m, size_t expected) {
 
   // assume the output is probability in 0/1 classification
   if(m->nb_outputs == 1) {
-    if((m->outputs[0].lower >= 0.5) != (m->outputs[0].upper >= 0.5)) {
+    if((m->outputs[0].lower >= (real_t)0.5) != (m->outputs[0].upper >= (real_t)0.5)) {
       return VOTE_UNSURE;
     }
-    if((m->outputs[0].lower >= 0.5) == expected) {
+    if((m->outputs[0].lower >= (real_t)0.5) == expected) {
       return VOTE_PASS;
     }
     return VOTE_FAIL;
@@ -153,8 +153,8 @@ vote_mapping_argmin(const vote_mapping_t* m) {
 
   // assume the output is probability in 0/1 classification
   if(m->nb_outputs == 1) {
-    if((m->outputs[0].lower <= 0.5) == (m->outputs[0].upper <= 0.5)) {
-      return m->outputs[0].lower <= 0.5;
+    if((m->outputs[0].lower <= (real_t)0.5) == (m->outputs[0].upper <= (real_t)0.5)) {
+      return m->outputs[0].lower <= (real_t)0.5;
     }
     return -1;
   }
@@ -185,10 +185,10 @@ vote_mapping_check_argmin(const vote_mapping_t* m, size_t expected) {
 
   // assume the output is probability in 0/1 classification
   if(m->nb_outputs == 1) {
-    if((m->outputs[0].lower <= 0.5) != (m->outputs[0].upper <= 0.5)) {
+    if((m->outputs[0].lower <= (real_t)0.5) != (m->outputs[0].upper <= (real_t)0.5)) {
       return VOTE_UNSURE;
     }
-    if((m->outputs[0].lower <= 0.5) == expected) {
+    if((m->outputs[0].lower <= (real_t)0.5) == expected) {
       return VOTE_PASS;
     }
     return VOTE_FAIL;
