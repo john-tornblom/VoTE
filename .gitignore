@@ -16,6 +16,7 @@ src/vote_robustness
 src/vote_throughput
 src/vote_xgbconv
 examples/vote_mnist_window_robustness
+examples/vote_acasxu
 
 # Python byte-code
 __pycache__/

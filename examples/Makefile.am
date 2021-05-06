@@ -14,8 +14,12 @@
 # along with this program; see the file COPYING. If not, see
 # <http://www.gnu.org/licenses/>.
 
-noinst_PROGRAMS = vote_mnist_window_robustness
+noinst_PROGRAMS = vote_mnist_window_robustness vote_acasxu
 
 vote_mnist_window_robustness_SOURCES = mnist.c
 vote_mnist_window_robustness_CFLAGS = -std=c99 -I../inc
 vote_mnist_window_robustness_LDADD = ../lib/libvote.la -lm
+
+vote_acasxu_SOURCES = acasxu.c
+vote_acasxu_CFLAGS = -std=c99 -I../inc
+vote_acasxu_LDADD = ../lib/libvote.la -lm
