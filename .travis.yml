@@ -31,11 +31,13 @@ matrix:
         - "python3 bindings/python/setup.py test"
         - "python3 bindings/python/example.py"
 
-    - name: "macOS 10 with Python 2 bindings"
+    - name: "macOS 11.3 with Python 2 bindings"
       os: osx
+      osx_image: xcode12.5
       language: c
       install:
-        - "pip install cffi sklearn catboost==0.20 xgboost==0.82 --user"
+        - "brew install argp-standalone"
+        - "python -m pip install cffi sklearn catboost==0.20 xgboost==0.82 --user"
       script:
         - "./bootstrap.sh"
         - "./configure"
