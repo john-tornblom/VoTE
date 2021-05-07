@@ -670,7 +670,7 @@ class TestXGBoost(unittest.TestCase):
         from sklearn.datasets import make_classification
         
         X, Y = make_classification(n_classes=2, n_features=4, random_state=12345)
-        m = XGBClassifier(iterations=3, n_jobs=1, max_depth=4, random_state=12345)
+        m = XGBClassifier(n_estimators=3, n_jobs=1, max_depth=4, random_state=12345)
         m.fit(X, Y)
         
         e = vote.Ensemble.from_xgboost(m)
@@ -686,7 +686,7 @@ class TestXGBoost(unittest.TestCase):
         from sklearn.datasets import make_regression
 
         X, Y = make_regression(n_targets=1, n_features=2, random_state=12345)
-        m = XGBRegressor(iterations=3, base_score=0, n_jobs=1, random_state=12345)
+        m = XGBRegressor(n_estimators=3, base_score=0, n_jobs=1, max_depth=4, random_state=12345)
         m.fit(X, Y)
         
         e = vote.Ensemble.from_xgboost(m)
