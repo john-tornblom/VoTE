@@ -51,6 +51,10 @@ please file an issue before you start to work on you changes. This will allow us
 to discuss the solution properly before you commit time and effort.
 
 ## Related Publications
+- J. Törnblom and S. Nadjm-Tehrani, **Scaling up Memory-Efficient Formal
+  Verification Tools for Tree Ensembles**,
+  arXiv preprint [arXiv:1905.04194][paper:scaling], 2021.
+
 - J. Törnblom and S. Nadjm-Tehrani, **An Abstraction-Refinement Approach to
   Formal Verification of Tree Ensembles**, *in proceedings of 2nd International
   workshop on Artificial Intelligence Safety Engineering, held in conjunction
@@ -82,6 +86,7 @@ JSON-persisted models. Parson is licened under the [MIT license][mitlic].
 [buildstats]: https://travis-ci.org/john-tornblom/VoTE
 [example]: bindings/python/example.py
 [issues]: https://github.com/john-tornblom/vote/issues/new
+[paper:scaling]: https://arxiv.org/pdf/2105.02595
 [paper:absref]: https://www.ida.liu.se/labs/rtslab/publications/2019/John_WAISE.pdf
 [paper:vote]: https://arxiv.org/pdf/1905.04194
 [paper:vorf]: https://www.ida.liu.se/labs/rtslab/publications/2018/John_FTSCS.pdf
