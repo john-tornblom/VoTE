@@ -24,6 +24,7 @@ along with this program; see the file COPYING. If not, see
 #include <argp.h>
 #include <time.h>
 #include <unistd.h>
+#include <limits.h>
 #include <vote.h>
 
 #include "workqueue.h"
