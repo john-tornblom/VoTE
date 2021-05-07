@@ -29,7 +29,7 @@ see <http://www.gnu.org/licenses/>.  */
 /**
  * List of tokens from the CSV format
  **/
-typedef enum sql_token {
+typedef enum csv_token {
   TOK_INVALID,
   TOK_DELIMITER,
   TOK_STRING,

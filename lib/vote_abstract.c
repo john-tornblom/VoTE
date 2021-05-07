@@ -46,7 +46,6 @@ vote_abstract_join_decend_tree(const vote_tree_t *t, size_t node_id,
   real_t value[nb_outputs];
     
   if(left_id < 0 || right_id < 0) {
-
     memcpy(value, t->value[node_id], nb_outputs * sizeof(real_t));
     if(t->normalize) {
       vote_normalize(value, nb_outputs);

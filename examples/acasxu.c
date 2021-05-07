@@ -457,8 +457,6 @@ analyze_acasxu(acasxu_analysis_t *a) {
     fprintf(stderr, "Unknown property %d\n", a->property);
     return false;
   }
-
-
 }
 
 
@@ -500,7 +498,6 @@ int main(int argc, char* argv[]) {
   struct argp_option opts[] = {
     {.name="property", .key='p', .arg="NUMBER",
      .doc="The property to verify (φ)"},
- 
     {0}
   };
   
