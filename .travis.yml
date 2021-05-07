@@ -1,28 +1,12 @@
 matrix:
   include:
-    - name: "Ubuntu 16.04 with Python 2 bindings"
+    - name: "Ubuntu 20.04"
       os: linux
-      dist: xenial
+      dist: focal
       language: c
       install:
-        - "sudo apt-get install autoconf libtool build-essential"
-        - "python2 -m pip install cffi sklearn catboost==0.20 xgboost==0.82 --user"
-      script:
-        - "./bootstrap.sh"
-        - "PYTHON=python2 ./configure"
-        - "make clean"
-        - "make"
-        - "python2 bindings/python/setup.py test"
-        - "python2 bindings/python/example.py"
-
-    - name: "Ubuntu 16.04 with Python 3 bindings"
-      os: linux
-      dist: xenial
-      language: python
-      python: "3.6"
-      install:
-        - "sudo apt-get install autoconf libtool build-essential"
-        - "pip install cffi sklearn catboost==0.20 xgboost==0.82"
+        - "sudo apt-get install autoconf libtool build-essential python3-cffi python3-sklearn"
+        - "python3 -m pip install catboost==0.25.1 xgboost==1.4.1 --user"
       script:
         - "./bootstrap.sh"
         - "PYTHON=python3 ./configure"
@@ -31,17 +15,17 @@ matrix:
         - "python3 bindings/python/setup.py test"
         - "python3 bindings/python/example.py"
 
-    - name: "macOS 11.3 with Python 2 bindings"
+    - name: "macOS 11.3"
       os: osx
       osx_image: xcode12.5
       language: c
       install:
-        - "brew install argp-standalone"
-        - "python -m pip install cffi sklearn catboost==0.20 xgboost==0.82 --user"
+        - "brew install argp-standalone libomp"
+        - "python3 -m pip install cffi sklearn catboost==0.25.1 xgboost==1.4.1 --user"
       script:
         - "./bootstrap.sh"
-        - "./configure"
+        - "PYTHON=python3 LDFLAGS=-largp ./configure"
         - "make clean"
         - "make"
-        - "python bindings/python/setup.py test"
-        - "python bindings/python/example.py"
+        - "python3 bindings/python/setup.py test"
+        - "python3 bindings/python/example.py"
