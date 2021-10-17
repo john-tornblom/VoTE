@@ -11,37 +11,34 @@ class complies with some requirement.
 For more information, see [related publications](#related-publications).
 
 ## Building
-On Ubuntu-flavored operating systems, you can invoke the following commands to
-install dependencies, generate makefiles, and compile the source code.
+On Debian-flavored operating systems (tested with Debian 11.1), you can invoke
+the following commands to install dependencies, generate makefiles, and compile
+ the source code.
 ```console
 john@localhost:VoTE$ sudo apt-get install autoconf libtool build-essential
-john@localhost:VoTE$ sudo apt-get install python-cffi # optional python bindings
+john@localhost:VoTE$ sudo apt-get install python3-cffi python3-setuptools python3-dev
 john@localhost:VoTE$ ./bootstrap.sh
 john@localhost:VoTE$ ./configure
 john@localhost:VoTE$ make
 ```
 
-## Running Case Studies
-VoTE includes example case studies that use scikit-learn and catboost to train
-tree ensembles, and VoTE to verify requirements. To install scikit-learn and
-catboost on Ubuntu-flavored operating systems, invoke the following command:
-```console
-john@localhost:VoTE$ sudo apt-get install python-sklearn
-john@localhost:VoTE$ python -m pip install catboost --user
-```
 
-To run a collision detection verification case study, invoke the following
-command:
-```console
-john@localhost:VoTE$ ./support/collision_detection.sh
-```
-
-VoTE also includes Python bindings for easy prototyping and testing of
+VoTE includes Python bindings for easy prototyping and testing of
 domain-specific property checkers. See [example.py][example] for a simple
 example. To invoke a test suite for the python bindings, run the following
 command:
 ```console
-john@localhost:VoTE$ python bindings/python/setup.py test
+john@localhost:VoTE$ sudo apt-get install python3-sklearn python3-xgboost python3-pip
+john@localhost:VoTE$ python3 -m pip install catboost --user
+john@localhost:VoTE$ python3 bindings/python/setup.py test
+```
+
+## Running Case Studies
+VoTE also includes example case studies that use scikit-learn and catboost to
+train tree ensembles, and VoTE to verify requirements. To run a collision
+detection verification case study, invoke the following command:
+```console
+john@localhost:VoTE$ ./support/collision_detection.sh
 ```
 
 ## Reporting Bugs
