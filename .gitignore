@@ -5,6 +5,7 @@ _vote.c
 config.log
 config.status
 libtool
+catboost_info
 
 # Binaries
 src/vote_accuracy
